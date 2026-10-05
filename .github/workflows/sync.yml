@@ -1,0 +1,94 @@
+name: Sync screens
+
+on:
+  schedule:
+    - cron: "7 * * * *"      # every hour at :07
+    - cron: "0 9 1 * *"      # monthly keep-alive (see bottom job)
+  workflow_dispatch:          # "Run workflow" button for an instant update
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: screens
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pillow google-api-python-client google-auth
+
+      # Keep downloaded videos between runs so we only fetch new ones
+      - uses: actions/cache@v4
+        with:
+          path: site/media
+          key: media-${{ github.run_id }}
+          restore-keys: media-
+
+      - name: Pull posters from the website calendar (+ Drive extras if set up)
+        env:
+          VENUE_CALENDAR_URL: https://threewisemonkeyscolchester.com/calendar/
+          LOOKAHEAD_DAYS: "60"
+          MAX_EVENTS: "25"
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+          GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+        run: python scripts/sync.py
+
+      - name: Skip deploy if nothing changed
+        id: check
+        run: |
+          python - <<'EOF'
+          import json, os, urllib.request
+          url = "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/playlist.json"
+          new = json.load(open("site/playlist.json"))["items"]
+          try:
+              old = json.load(urllib.request.urlopen(url, timeout=20))["items"]
+          except Exception:
+              old = None
+          same = old == new and os.environ["EVENT"] == "schedule"
+          open(os.environ["GITHUB_OUTPUT"], "a").write(f"changed={'false' if same else 'true'}\n")
+          print("No change" if same else "Changed, deploying")
+          EOF
+        env:
+          EVENT: ${{ github.event_name }}
+
+      - uses: actions/configure-pages@v5
+        if: steps.check.outputs.changed == 'true'
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outputs.changed == 'true'
+        with:
+          path: site
+
+      - id: deploy
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/deploy-pages@v4
+
+  # GitHub pauses scheduled jobs on repos with no commits for 60 days.
+  # This makes a tiny commit once a month so the hourly sync never stops.
+  keepalive:
+    if: github.event.schedule == '0 9 1 * *'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          date -u +%F > .keepalive
+          git config user.name "screens-bot"
+          git config user.email "screens-bot@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "keep-alive" || true
+          git push
