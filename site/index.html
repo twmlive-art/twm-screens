@@ -1,0 +1,208 @@
+HELLO_TEST<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TWM Screens</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+  #stage video,#stage .slide{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity .6s}
+  #stage .on{opacity:1}
+  /* Portrait posters: blurred copy of the poster fills the sides instead of black bars */
+  .slide{overflow:hidden}
+  .slide .bg{position:absolute;inset:-5%;width:110%;height:110%;object-fit:cover;filter:blur(28px) brightness(.45);transform:scale(1.05)}
+  .slide .fg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 24px rgba(0,0,0,.6))}
+  #idle{color:#fff;font:600 4vw/1.2 system-ui,sans-serif;text-align:center;letter-spacing:.05em}
+  #debug{position:fixed;left:1vw;bottom:1vw;color:#0f0;font:14px monospace;background:rgba(0,0,0,.7);padding:6px 10px;display:none;white-space:pre}
+</style>
+</head>
+<body>
+<div id="stage"><div id="idle">Three Wise Monkeys</div></div>
+<div id="debug"></div>
+<script>
+(function () {
+  "use strict";
+  // ---- Settings (can be overridden in the URL, e.g. ?image=8&debug=1) ----
+  var q = new URLSearchParams(location.search);
+  var IMAGE_SECONDS   = +q.get("image") || 10;      // default time for a graphic
+  var REFRESH_MINUTES = +q.get("refresh") || 5;     // re-check playlist
+  var RELOAD_HOURS    = +q.get("reload") || 6;      // full page reload to clear memory leaks
+  var VIDEO_MAX_SECS  = 300;                        // never let one video hang the loop
+  var DEBUG = q.get("debug") === "1";
+
+  var stage = document.getElementById("stage");
+  var idle = document.getElementById("idle");
+  var dbg = document.getElementById("debug");
+  if (DEBUG) dbg.style.display = "block";
+
+  var playlist = [];   // items currently allowed to play
+  var index = -1;
+  var current = null;  // current DOM element
+  var timer = null, watchdog = null;
+  var lastProgress = Date.now();
+  var failsInARow = 0;   // stops a tight loop if every file is broken
+
+  function log(msg) {
+    if (!DEBUG) return;
+    var t = new Date().toLocaleTimeString("en-GB");
+    dbg.textContent = (t + "  " + msg + "\n" + dbg.textContent).split("\n").slice(0, 12).join("\n");
+  }
+
+  // Today's date in UK time as YYYY-MM-DD
+  function todayUK() {
+    try {
+      return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
+    } catch (e) {
+      var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 10);
+    }
+  }
+
+  // An event promo stays up until 6am the morning after the event (late gigs)
+  function isLive(item) {
+    if (!item.until) return true; // no date = always play
+    var now = new Date();
+    var ukNow;
+    try {
+      ukNow = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }).format(now);
+    } catch (e) { ukNow = String(now.getHours()); }
+    var today = todayUK();
+    if (item.until >= today) return true;
+    // the day after the event, keep it until 6am
+    var y = new Date(today + "T00:00:00Z"); y.setUTCDate(y.getUTCDate() - 1);
+    return item.until === y.toISOString().slice(0, 10) && parseInt(ukNow, 10) < 6;
+  }
+
+  function loadPlaylist() {
+    return fetch("playlist.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        var items = (data.items || []).filter(isLive);
+        var oldKey = playlist.map(function (i) { return i.src; }).join("|");
+        var newKey = items.map(function (i) { return i.src; }).join("|");
+        playlist = items;
+        if (oldKey !== newKey) log("playlist: " + items.length + " items");
+        if (!current) next();
+      })
+      .catch(function (e) { log("playlist error: " + e.message + " (keeping old list)"); if (!current) showIdle(); });
+  }
+
+  function clearTimers() { clearTimeout(timer); clearInterval(watchdog); }
+
+  function showIdle() {
+    idle.style.display = "block";
+    clearTimers();
+    timer = setTimeout(function () { current = null; loadPlaylist(); }, 30000);
+  }
+
+  function fail(msg) {
+    log(msg);
+    failsInARow++;
+    if (failsInARow >= Math.max(playlist.length, 1)) { failsInARow = 0; removeCurrent(); showIdle(); return; }
+    next();
+  }
+
+  function next() {
+    clearTimers();
+    // Drop anything that expired while we were playing
+    playlist = playlist.filter(isLive);
+    if (!playlist.length) { removeCurrent(); showIdle(); return; }
+    idle.style.display = "none";
+    index = (index + 1) % playlist.length;
+    play(playlist[index]);
+  }
+
+  function removeCurrent() {
+    if (!current) return;
+    var old = current;
+    old.classList.remove("on");
+    setTimeout(function () {
+      if (old.tagName === "VIDEO") { try { old.pause(); old.removeAttribute("src"); old.load(); } catch (e) {} }
+      if (old.parentNode) old.parentNode.removeChild(old);
+    }, 700);
+    current = null;
+  }
+
+  function play(item) {
+    log("play " + item.name);
+    var el;
+    if (item.type === "video") {
+      el = document.createElement("video");
+      el.muted = true; el.defaultMuted = true;
+      el.setAttribute("muted", ""); el.setAttribute("playsinline", ""); el.setAttribute("autoplay", "");
+      el.preload = "auto";
+      el.src = item.src;
+      el.addEventListener("playing", function () { show(el); });
+      el.addEventListener("timeupdate", function () { lastProgress = Date.now(); });
+      el.addEventListener("ended", next);
+      el.addEventListener("error", function () { fail("video error, skipping " + item.name); });
+      stage.appendChild(el);
+      var p = el.play(); if (p && p.catch) p.catch(function (e) { log("autoplay blocked: " + e.message); });
+      lastProgress = Date.now();
+      // Watchdog: skip if the video stalls for 20s or runs far too long
+      var started = Date.now();
+      watchdog = setInterval(function () {
+        if (Date.now() - lastProgress > 20000 || Date.now() - started > VIDEO_MAX_SECS * 1000) {
+          log("stalled, skipping " + item.name); next();
+        }
+      }, 5000);
+    } else {
+      el = document.createElement("div"); el.className = "slide";
+      var bg = document.createElement("img"); bg.className = "bg"; bg.alt = "";
+      var fg = document.createElement("img"); fg.className = "fg"; fg.alt = item.name || "";
+      fg.onload = function () {
+        // Only need the blurred fill when the poster doesn't match the screen shape
+        var screenAR = stage.clientWidth / stage.clientHeight, imgAR = fg.naturalWidth / fg.naturalHeight;
+        if (Math.abs(screenAR - imgAR) < 0.15) bg.style.display = "none";
+        show(el); timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
+      };
+      fg.onerror = function () { fail("image error, skipping " + item.name); };
+      bg.src = item.src; fg.src = item.src;
+      el.appendChild(bg); el.appendChild(fg);
+      stage.appendChild(el);
+    }
+  }
+
+  function show(el) {
+    failsInARow = 0;
+    if (current && current !== el) removeCurrent();
+    current = el;
+    requestAnimationFrame(function () { el.classList.add("on"); });
+  }
+
+  // Try to stop the TV screen sleeping (not every Samsung browser supports this)
+  function keepAwake() {
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request("screen").then(function () { log("wake lock on"); }).catch(function () {});
+    }
+  }
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) keepAwake(); });
+
+  // Press any key on the remote / click to go full screen
+  function goFullscreen() {
+    var d = document.documentElement;
+    var f = d.requestFullscreen || d.webkitRequestFullscreen;
+    if (f) { try { f.call(d); } catch (e) {} }
+    keepAwake();
+  }
+  document.addEventListener("click", goFullscreen);
+  document.addEventListener("keydown", goFullscreen);
+
+  setInterval(loadPlaylist, REFRESH_MINUTES * 60000);
+  // Full reload every few hours, but only if the site is reachable.
+  // (If Wi-Fi is down at reload time the TV would show an error page and never come back.)
+  function safeReload() {
+    fetch("playlist.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (r.ok) location.reload(); else throw 0; })
+      .catch(function () { log("offline, reload postponed"); setTimeout(safeReload, 300000); });
+  }
+  setTimeout(safeReload, RELOAD_HOURS * 3600000);
+  window.addEventListener("online", loadPlaylist);
+
+  keepAwake();
+  loadPlaylist();
+})();
+</script>
+</body>
+</html>
