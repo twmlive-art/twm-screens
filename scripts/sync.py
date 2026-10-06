@@ -41,6 +41,10 @@ MAX_MB = 95
 WARN_MB = 40
 LOOKAHEAD_DAYS = int(os.environ.get("LOOKAHEAD_DAYS", "60"))   # don't advertise gigs 4 months out
 MAX_EVENTS = int(os.environ.get("MAX_EVENTS", "25"))           # keep the loop watchable
+# Listings whose "poster" is an auto-named photo upload (e.g. 09-08-2026-102113-3840.jpg, the
+# Fringe-style listings) rather than a designed graphic. Set to "0" to show them anyway.
+SKIP_PHOTO_POSTERS = os.environ.get("SKIP_PHOTO_POSTERS", "1") != "0"
+PHOTO_NAME_RE = re.compile(r"^\d{2}-\d{2}-\d{4}-\d{6}-\d{4}\.(jpe?g|png|webp)$", re.I)
 UK = ZoneInfo("Europe/London")
 
 NAME_RE = re.compile(r"^\s*(\d{4})[-_. ](\d{2})[-_. ](\d{2})[\s_\-]*(.*)$")
@@ -116,7 +120,20 @@ def parse_calendar(page_html):
     return events, problems
 
 
-def choose_events(events, now):
+def read_skip_list(site):
+    """site/skip.txt: one line per event to keep off the screens (any part of the title, case-insensitive)."""
+    p = os.path.join(site, "skip.txt")
+    if not os.path.exists(p):
+        return []
+    with open(p, encoding="utf-8") as f:
+        return [ln.strip().lower() for ln in f if ln.strip() and not ln.startswith("#")]
+
+
+def is_photo_listing(img_url):
+    return bool(PHOTO_NAME_RE.match(img_url.rsplit("/", 1)[-1].split("?")[0]))
+
+
+def choose_events(events, now, skip=()):
     """Current, soonest first, within the look-ahead window, de-duplicated by poster, capped."""
     today = now.date()
     horizon = (today + dt.timedelta(days=LOOKAHEAD_DAYS)).isoformat()
@@ -124,6 +141,10 @@ def choose_events(events, now):
     for e in sorted(events, key=lambda e: (e["start"], e["title"].lower())):
         if not still_current(e["end"], now) or e["start"] > horizon:
             continue
+        if any(s in e["title"].lower() for s in skip):
+            continue                # listed in site/skip.txt
+        if SKIP_PHOTO_POSTERS and is_photo_listing(e["img"]):
+            continue                # photo upload, not a designed graphic
         if e["img"] in seen:        # same poster used for a run of dates: show once, keep latest date
             for o in out:
                 if o["img"] == e["img"]:
@@ -328,7 +349,8 @@ def main():
         page = fetch(SITE_URL)
         events, probs = parse_calendar(page)
         problems += probs
-        for e in choose_events(events, now):
+        skip = read_skip_list(site)
+        for e in choose_events(events, now, skip):
             ext = os.path.splitext(e["img"].split("?")[0])[1].lower() or ".jpg"
             if ext not in IMAGE_EXT:
                 problems.append((e["title"], f"Poster is {ext}, not an image we can show."))
