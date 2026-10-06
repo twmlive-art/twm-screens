@@ -9,9 +9,12 @@ SOURCE 2 (in-house promos): the site/extras/ folder in this repo.
   For things that aren't events: how-to-book videos, bar menus, house rules, offers.
   Drop files in on github.com (Add file > Upload files). Same naming rules as below.
 
-SOURCE 3 (optional): a Google Drive folder, only if GDRIVE_FOLDER_ID and GDRIVE_SA_JSON are set.
+SOURCE 3 (drag and drop): a Google Drive folder shared as "Anyone with the link can view".
+  Set DRIVE_PUBLIC_FOLDER_ID in the workflow. Staff drop files in Drive; no Google keys needed.
 
-  File naming (sources 2 and 3):
+SOURCE 4 (optional): a private Drive folder via service account, only if GDRIVE_FOLDER_ID and GDRIVE_SA_JSON are set.
+
+  File naming (sources 2, 3 and 4):
     2026-10-31 Halloween.mp4        -> until 6am the morning after 31 Oct
     Bar Menu [15s].png              -> no date = always; 15 second hold
     _draft.mp4                      -> ignored
@@ -201,6 +204,34 @@ def plan_drive(files, now):
     return items, problems
 
 
+# Public ("anyone with the link") Drive folder: no credentials, read via the embedded folder view.
+PUBLIC_LIST_URL = "https://drive.google.com/embeddedfolderview?id={id}#list"
+PUBLIC_DL_URL = "https://drive.google.com/uc?export=download&confirm=t&id={id}"
+ENTRY_RE = re.compile(r'id="entry-([A-Za-z0-9_-]+)"(.*?)<div class="flip-entry-title">(.*?)</div>', re.S)
+
+
+def parse_public_listing(page_html):
+    """Pure: embedded folder view HTML -> [{id, name}]. Folders inside are skipped."""
+    out = []
+    for fid, mid, name in ENTRY_RE.findall(page_html):
+        name = html.unescape(re.sub(r"<[^>]+>", "", name)).strip()
+        if name:
+            out.append({"id": fid, "name": name})
+    return out
+
+
+def plan_public_drive(folder_id, now):
+    page = fetch(PUBLIC_LIST_URL.format(id=folder_id))
+    listing = parse_public_listing(page)
+    files = [{"id": f["id"], "name": f["name"], "size": 0, "modifiedTime": "pub"} for f in listing]
+    items, problems = plan_drive(files, now)
+    for i in items:
+        i["source"] = "drive"
+        i["url"] = PUBLIC_DL_URL.format(id=i["id"])
+        i["local"] = f"pub-{i['id']}" + (".jpg" if i["type"] == "image" else os.path.splitext(i["name"])[1].lower())
+    return items, problems, len(listing)
+
+
 def fetch_drive(folder, sa_json):
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
@@ -325,7 +356,19 @@ def main():
     problems += x_probs
     print(f"extras: {len(x_items)} selected")
 
-    # 3. Drive extras (optional)
+    # 3. Public Drive folder (drag and drop, no keys)
+    if os.environ.get("DRIVE_PUBLIC_FOLDER_ID"):
+        try:
+            p_items, p_probs, n = plan_public_drive(os.environ["DRIVE_PUBLIC_FOLDER_ID"].strip(), now)
+            items += p_items
+            problems += p_probs
+            print(f"public drive: {n} files listed, {len(p_items)} selected")
+            if n == 0:
+                problems.append(("Google Drive folder", "Listed 0 files. If there are files in it, check the folder is shared as 'Anyone with the link'."))
+        except Exception as ex:
+            problems.append(("Google Drive folder", f"Couldn't read it: {ex}"))
+
+    # 4. Private Drive via service account (optional)
     drive = None
     if os.environ.get("GDRIVE_FOLDER_ID") and os.environ.get("GDRIVE_SA_JSON"):
         try:
@@ -350,6 +393,19 @@ def main():
             if i["source"] == "website":
                 print("download", i["title"])
                 shrink_poster(fetch(i["url"], binary=True), path)
+            elif i["source"] == "drive" and i.get("url"):
+                print("download", i["name"])
+                data = fetch(i["url"], binary=True)
+                if data[:200].lstrip().lower().startswith(b"<!doctype html") or b"<html" in data[:300].lower():
+                    raise RuntimeError("Drive returned a web page instead of the file (too big, or not shared with the link)")
+                if len(data) > MAX_MB * 1_000_000:
+                    raise RuntimeError(f"{len(data)/1e6:.0f}MB is too big, re-export under {WARN_MB}MB")
+                if i["type"] == "image":
+                    shrink_poster(data, path)
+                else:
+                    with open(path + ".part", "wb") as fh:
+                        fh.write(data)
+                    os.replace(path + ".part", path)
             elif i["source"] == "drive" and drive:
                 from googleapiclient.http import MediaIoBaseDownload
                 print("download", i["name"])
