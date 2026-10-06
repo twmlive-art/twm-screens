@@ -420,6 +420,8 @@ def main():
             problems.append((i["title"], f"Download failed: {ex}"))
             wanted.discard(i["local"])
     items = [i for i in items if i["source"] == "extras" or i["local"] in wanted]
+    # In-house promos (repo folder + Drive) play first, then the event posters
+    items.sort(key=lambda i: 0 if i["source"] in ("extras", "drive") else 1)
 
     for old in os.listdir(media):
         if old not in wanted:
