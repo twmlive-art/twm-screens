@@ -277,6 +277,8 @@ def write_outputs(site, items, problems, now, source_ok):
     for i in items:
         src = ("extras/" + urllib.parse.quote(i["name"])) if i["source"] == "extras" else ("media/" + i["local"])
         entry = {"src": src, "name": i["title"], "type": i["type"]}
+        if i.get("date"):
+            entry["date"] = i["date"]       # event start; shown next to the poster
         if i.get("until"):
             entry["until"] = i["until"]
         if i.get("seconds"):
@@ -356,7 +358,7 @@ def main():
                 problems.append((e["title"], f"Poster is {ext}, not an image we can show."))
                 continue
             h = hashlib.sha1(e["img"].encode()).hexdigest()[:12]
-            items.append({"source": "website", "title": e["title"], "type": "image",
+            items.append({"source": "website", "title": e["title"], "type": "image", "date": e["start"],
                           "until": e["end"], "seconds": None, "local": f"web-{h}.jpg", "url": e["img"]})
         print(f"website: {len(events)} events listed, {len(items)} selected")
     except Exception as ex:  # keep last good list rather than blank the screens
@@ -367,7 +369,7 @@ def main():
             for o in old["items"]:
                 if o["src"].startswith("media/web-"):
                     items.append({"source": "website (cached)", "title": o["name"], "type": o["type"],
-                                  "until": o.get("until"), "seconds": o.get("seconds"),
+                                  "date": o.get("date"), "until": o.get("until"), "seconds": o.get("seconds"),
                                   "local": o["src"].split("/", 1)[1], "url": None})
         except Exception:
             pass
