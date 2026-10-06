@@ -43,6 +43,7 @@ jobs:
         env:
           VENUE_CALENDAR_URL: https://threewisemonkeyscolchester.com/calendar/
           LOOKAHEAD_DAYS: "60"
+          DRIVE_PUBLIC_FOLDER_ID: 1G4eU3Q54ZRX4THyzEJvfr92dGrUYwzBz
           MAX_EVENTS: "25"
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
           GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
