@@ -5,10 +5,13 @@ SOURCE 1 (automatic): the venue website calendar.
   Every event on https://threewisemonkeyscolchester.com/calendar/ already has a date and a poster.
   We pull those, so anything on sale is on the screens with nobody uploading anything.
 
-SOURCE 2 (optional extras): a Google Drive folder.
-  For things that aren't events: how-to-book videos, bar menus, house rules.
-  Only used if GDRIVE_FOLDER_ID and GDRIVE_SA_JSON are set.
-  File naming:
+SOURCE 2 (in-house promos): the site/extras/ folder in this repo.
+  For things that aren't events: how-to-book videos, bar menus, house rules, offers.
+  Drop files in on github.com (Add file > Upload files). Same naming rules as below.
+
+SOURCE 3 (optional): a Google Drive folder, only if GDRIVE_FOLDER_ID and GDRIVE_SA_JSON are set.
+
+  File naming (sources 2 and 3):
     2026-10-31 Halloween.mp4        -> until 6am the morning after 31 Oct
     Bar Menu [15s].png              -> no date = always; 15 second hold
     _draft.mp4                      -> ignored
@@ -23,6 +26,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 import urllib.request
 from zoneinfo import ZoneInfo
 
@@ -129,7 +133,21 @@ def choose_events(events, now):
     return out
 
 
-# ---------------------------------------------------------------- drive extras
+# ---------------------------------------------------------------- extras (repo folder + optional Drive)
+def plan_extras_folder(site, now):
+    """In-house promos committed to site/extras/. Served straight from there, no copying."""
+    folder = os.path.join(site, "extras")
+    if not os.path.isdir(folder):
+        return [], []
+    files = [{"id": n, "name": n, "size": os.path.getsize(os.path.join(folder, n)), "modifiedTime": str(os.path.getmtime(os.path.join(folder, n)))}
+             for n in sorted(os.listdir(folder)) if os.path.isfile(os.path.join(folder, n))]
+    items, problems = plan_drive(files, now)
+    for i in items:
+        i["source"] = "extras"
+        i["local"] = "../extras/" + i["name"]   # relative to site/media/
+    return items, problems
+
+
 def parse_name(filename):
     stem, ext = os.path.splitext(filename)
     ext = ext.lower()
@@ -205,7 +223,8 @@ def fetch_drive(folder, sa_json):
 def write_outputs(site, items, problems, now, source_ok):
     playlist = {"generated": now.isoformat(timespec="seconds"), "items": []}
     for i in items:
-        entry = {"src": "media/" + i["local"], "name": i["title"], "type": i["type"]}
+        src = ("extras/" + urllib.parse.quote(i["name"])) if i["source"] == "extras" else ("media/" + i["local"])
+        entry = {"src": src, "name": i["title"], "type": i["type"]}
         if i.get("until"):
             entry["until"] = i["until"]
         if i.get("seconds"):
@@ -300,7 +319,13 @@ def main():
         except Exception:
             pass
 
-    # 2. Drive extras (optional)
+    # 2. In-house promos from site/extras/
+    x_items, x_probs = plan_extras_folder(site, now)
+    items += x_items
+    problems += x_probs
+    print(f"extras: {len(x_items)} selected")
+
+    # 3. Drive extras (optional)
     drive = None
     if os.environ.get("GDRIVE_FOLDER_ID") and os.environ.get("GDRIVE_SA_JSON"):
         try:
@@ -312,9 +337,11 @@ def main():
         except Exception as ex:
             problems.append(("Google Drive", f"Couldn't read the extras folder: {ex}"))
 
-    # 3. Downloads
+    # 4. Downloads (website + Drive only; repo extras are already on disk)
     wanted = set()
     for i in items:
+        if i["source"] == "extras":
+            continue
         path = os.path.join(media, i["local"])
         wanted.add(i["local"])
         if os.path.exists(path):
@@ -336,7 +363,7 @@ def main():
         except Exception as ex:
             problems.append((i["title"], f"Download failed: {ex}"))
             wanted.discard(i["local"])
-    items = [i for i in items if i["local"] in wanted]
+    items = [i for i in items if i["source"] == "extras" or i["local"] in wanted]
 
     for old in os.listdir(media):
         if old not in wanted:
