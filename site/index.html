@@ -48,7 +48,6 @@
   if (DEBUG) dbg.style.display = "block";
 
   var playlist = [];   // items currently allowed to play
-  var index = -1;
   var current = null;  // current DOM element
   var timer = null, watchdog = null;
   var lastProgress = Date.now();
@@ -114,14 +113,59 @@
     next();
   }
 
+  // ---- Running order: videos always have at least MIN_GAP static images between them ----
+  var MIN_GAP = 2;
+  var queue = [];          // the current lap of the loop
+  var videoTurn = 0;       // rotates which videos get a slot when there aren't enough images
+  var imagesSinceVideo = MIN_GAP;  // counted from what actually made it on screen
+
+  // Build one lap: video, then a group of 2+ images, video, group... spread evenly.
+  // If there aren't enough images for every video, the videos take turns across laps.
+  function buildLap(items) {
+    var vids = items.filter(function (i) { return i.type === "video"; });
+    var imgs = items.filter(function (i) { return i.type !== "video"; });
+    if (!vids.length) return imgs.slice();
+    if (!imgs.length) return vids.slice();           // nothing to space them with
+    while (imgs.length < MIN_GAP) imgs = imgs.concat(imgs);   // 1 graphic: show it twice
+    var n = Math.min(vids.length, Math.floor(imgs.length / MIN_GAP));
+    var out = [], start = 0;
+    for (var k = 0; k < n; k++) {
+      out.push(vids[(videoTurn + k) % vids.length]);
+      var end = Math.floor(imgs.length * (k + 1) / n);
+      out = out.concat(imgs.slice(start, end));
+      start = end;
+    }
+    videoTurn = (videoTurn + n) % vids.length;
+    return out;
+  }
+
+  function stillListed(item) {
+    return playlist.some(function (p) { return p.src === item.src; }) && isLive(item);
+  }
+
+  function pickNext() {
+    var hasImages = playlist.some(function (i) { return i.type !== "video"; });
+    for (var tries = 0; tries < 2; tries++) {
+      while (queue.length) {
+        var item = queue.shift();
+        if (!stillListed(item)) continue;
+        // Safety net: never put a video on too early (e.g. a poster expired mid-lap)
+        if (item.type === "video" && hasImages && imagesSinceVideo < MIN_GAP) continue;
+        return item;
+      }
+      queue = buildLap(playlist);
+    }
+    var safe = playlist.filter(function (i) { return i.type !== "video"; });
+    return (hasImages && imagesSinceVideo < MIN_GAP) ? safe[0] : playlist[0];
+  }
+
   function next() {
     clearTimers();
     // Drop anything that expired while we were playing
     playlist = playlist.filter(isLive);
     if (!playlist.length) { removeCurrent(); showIdle(); return; }
     idle.style.display = "none";
-    index = (index + 1) % playlist.length;
-    play(playlist[index]);
+    play(pickNext());
   }
 
   function removeCurrent() {
@@ -200,6 +244,7 @@
 
   function show(el) {
     failsInARow = 0;
+    imagesSinceVideo = el.tagName === "VIDEO" ? 0 : imagesSinceVideo + 1;
     if (current && current !== el) removeCurrent();
     current = el;
     // setTimeout rather than requestAnimationFrame: rAF never fires in a hidden tab, so the slide would stay invisible
