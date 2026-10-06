@@ -168,7 +168,8 @@
     failsInARow = 0;
     if (current && current !== el) removeCurrent();
     current = el;
-    requestAnimationFrame(function () { el.classList.add("on"); });
+    // setTimeout rather than requestAnimationFrame: rAF never fires in a hidden tab, so the slide would stay invisible
+    setTimeout(function () { el.classList.add("on"); }, 30);
   }
 
   // Try to stop the TV screen sleeping (not every Samsung browser supports this)
