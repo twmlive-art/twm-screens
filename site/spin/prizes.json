@@ -1,0 +1,71 @@
+{
+  "_help": "Edit this file on github.com to change the wheel. weight = how likely (bigger = more often). type: points (adds loyalty points), voucher (staff redeem at the bar), none (no prize). jackpot: true marks the big one (the TV finale lands on it). The wheel and the TV slide both read this file, so changes go live within the hour. code = the word at the start of the voucher code for voucher prizes (PINT-482).",
+  "spin_days": 7,
+  "prize_days": 7,
+  "prizes": [
+    {
+      "id": "pts10",
+      "label": "10 Monkey Points",
+      "type": "points",
+      "points": 10,
+      "weight": 30,
+      "colour": "#1F4A38"
+    },
+    {
+      "id": "omb",
+      "label": "Free OMB pint",
+      "type": "voucher",
+      "weight": 9,
+      "colour": "#FFD166",
+      "code": "PINT"
+    },
+    {
+      "id": "none",
+      "label": "Better luck next time",
+      "type": "none",
+      "weight": 28,
+      "colour": "#1F4A38"
+    },
+    {
+      "id": "food5",
+      "label": "£5 off food",
+      "type": "voucher",
+      "weight": 7,
+      "colour": "#FFD166",
+      "code": "FOOD"
+    },
+    {
+      "id": "pts25",
+      "label": "25 Monkey Points",
+      "type": "points",
+      "points": 25,
+      "weight": 15,
+      "colour": "#1F4A38"
+    },
+    {
+      "id": "cocktail",
+      "label": "2 for 1 cocktails",
+      "type": "voucher",
+      "weight": 6,
+      "colour": "#FFD166",
+      "code": "MIX"
+    },
+    {
+      "id": "special",
+      "label": "Free weekly food special",
+      "type": "voucher",
+      "weight": 3,
+      "colour": "#1F4A38",
+      "code": "SPEC"
+    },
+    {
+      "id": "pts100",
+      "label": "100 Monkey Points",
+      "type": "points",
+      "points": 100,
+      "weight": 2,
+      "colour": "#E8486B",
+      "jackpot": true
+    }
+  ]
+}
