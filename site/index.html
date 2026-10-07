@@ -10,6 +10,7 @@
   html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none}
   #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
   #stage video,#stage .slide{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;opacity:0;transition:opacity .6s}
+  #stage iframe.slide{border:0}
   #stage .on{opacity:1}
   /* Non-16:9 posters: poster on the left, event details on the right, blurred poster behind */
   .slide{overflow:hidden}
@@ -202,6 +203,16 @@
           log("stalled, skipping " + item.name); next();
         }
       }, 5000);
+    } else if (item.type === "html") {
+      // Animated in-house slide (an .html file in extras/). Shown in a frame so it can't break the player.
+      el = document.createElement("iframe"); el.className = "slide"; el.setAttribute("scrolling", "no");
+      el.setAttribute("sandbox", "allow-scripts allow-same-origin");
+      var shown = false, reveal = function () { if (shown) return; shown = true; show(el); timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000); };
+      el.addEventListener("load", reveal);
+      el.addEventListener("error", function () { fail("html error, skipping " + item.name); });
+      el.src = item.src;
+      stage.appendChild(el);
+      setTimeout(reveal, 4000);   // some TV browsers never fire load on an iframe
     } else {
       el = document.createElement("div"); el.className = "slide";
       var bg = document.createElement("img"); bg.className = "bg"; bg.alt = "";
