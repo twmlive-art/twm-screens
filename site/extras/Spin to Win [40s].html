@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spin to Win</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  :root{--green:#0E2A1F;--yellow:#FFD166;--cream:#FFF4D6;--brown:#5A3217;--ink:#14201B;--orange:#F26B3A}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Inter,system-ui,sans-serif}
+  #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;margin:-540px 0 0 -960px;transform-origin:50% 50%;display:flex;overflow:hidden}
+
+  /* ---------- LEFT ---------- */
+  .left{position:relative;width:960px;height:1080px;background:radial-gradient(ellipse at 50% 52%,#2B6E4E 0,var(--green) 62%);overflow:hidden}
+  .canopy{position:absolute;left:0;top:0;width:960px;height:110px;background:linear-gradient(#071a12,rgba(7,26,18,0))}
+
+  .burst{position:absolute;left:80px;top:150px;width:800px;height:800px;border-radius:50%;
+    background:repeating-conic-gradient(rgba(255,209,102,.22) 0 9deg,rgba(255,209,102,0) 9deg 18deg);
+    animation:turn 40s linear infinite;mask:radial-gradient(circle,#000 30%,transparent 70%);-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%)}
+  .spark{position:absolute;width:18px;height:18px;background:var(--yellow);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:twinkle 1.6s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{transform:scale(.3);opacity:.2}50%{transform:scale(1.4);opacity:1}}
+  @keyframes turn{to{transform:rotate(360deg)}}
+
+  /* monkeys: vine + monkey swing as one piece from the canopy */
+  .swing{position:absolute;top:0;width:140px;transform-origin:50% 0;animation:swing 3s ease-in-out infinite;transition:left 1.1s cubic-bezier(.3,1.3,.5,1)}
+  .swing.hop svg{animation:hop 1.1s ease-in-out}
+  @keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-70px) rotate(-10deg)}70%{transform:translateY(10px)}}
+  .cheer .swing{animation-duration:.9s!important}
+  .cheer .swing svg{animation:bounce .45s ease-in-out infinite alternate}
+  @keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-26px)}}
+  .cheer .mouth{d:path("M40 56 q10 16 20 0 z");fill:#C0392B}
+  .party .headline{opacity:0;transition:opacity .4s}
+  .dancer{position:absolute;bottom:30px;width:150px;height:210px;transition:left 1.2s cubic-bezier(.3,1.2,.5,1);animation:dance .5s ease-in-out infinite alternate}
+  .dancer svg{width:100%;height:100%;overflow:visible}
+  @keyframes dance{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-34px) rotate(8deg)}}
+  /* each jackpot dancer moves its arms differently */
+  .dancer .armL,.dancer .armR{transform-box:view-box;transform-origin:34px 56px}
+  .dancer .armR{transform-origin:66px 56px}
+  .d0 .armL{animation:waveL .4s ease-in-out infinite alternate}.d0 .armR{animation:waveR .4s ease-in-out infinite alternate}
+  .d1 .armL{animation:pumpL .5s ease-in-out infinite alternate}.d1 .armR{animation:pumpR .5s ease-in-out infinite alternate}
+  .d2 .armL{animation:wideL .7s ease-in-out infinite alternate}.d2 .armR{animation:wideR .7s ease-in-out infinite alternate}
+  .d3 .armL{animation:downL .45s ease-in-out infinite alternate}.d3 .armR{animation:waveR .3s ease-in-out infinite alternate}
+  .d4 .armL{animation:bigL .6s ease-in-out infinite alternate}.d4 .armR{animation:bigR .6s ease-in-out infinite alternate -.3s}
+  .d5 .armL{animation:clapL .3s ease-in-out infinite alternate}.d5 .armR{animation:clapR .3s ease-in-out infinite alternate}
+  @keyframes waveL{from{transform:rotate(-30deg)}to{transform:rotate(25deg)}}
+  @keyframes waveR{from{transform:rotate(30deg)}to{transform:rotate(-25deg)}}
+  @keyframes pumpL{from{transform:rotate(-70deg)}to{transform:rotate(0)}}
+  @keyframes pumpR{from{transform:rotate(0)}to{transform:rotate(70deg)}}
+  @keyframes wideL{from{transform:rotate(-110deg)}to{transform:rotate(-60deg)}}
+  @keyframes wideR{from{transform:rotate(110deg)}to{transform:rotate(60deg)}}
+  @keyframes downL{from{transform:rotate(-150deg)}to{transform:rotate(-120deg)}}
+  @keyframes bigL{from{transform:rotate(-130deg)}to{transform:rotate(10deg)}}
+  @keyframes bigR{from{transform:rotate(130deg)}to{transform:rotate(-10deg)}}
+  @keyframes clapL{from{transform:rotate(-40deg)}to{transform:rotate(35deg)}}
+  @keyframes clapR{from{transform:rotate(40deg)}to{transform:rotate(-35deg)}}
+  .callout.jackpot .prize{background:var(--orange);color:#fff;font-size:112px;animation:pulse .5s ease-in-out infinite}
+  .callout.jackpot .won{font-size:120px;color:var(--yellow);letter-spacing:.08em;text-shadow:0 8px 24px rgba(0,0,0,.6)}
+  .swing .vine{position:relative;width:8px;margin:0 auto;background:linear-gradient(#5E3A1C,#8C5A33);border-radius:0 0 6px 6px}
+  .leaf{position:absolute;width:30px;height:15px;background:#3C9A63;border-radius:15px 0;left:66px;transform-origin:0 50%;animation:flutter 2.2s ease-in-out infinite}
+  .leaf.l{left:44px;transform:scaleX(-1);transform-origin:100% 50%;background:#2E8552}
+  @keyframes flutter{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
+  .leaf.l{animation-name:flutterL}
+  @keyframes flutterL{0%,100%{transform:scaleX(-1) rotate(8deg)}50%{transform:scaleX(-1) rotate(-10deg)}}
+  .swing svg{display:block;width:140px;height:196px;margin-top:-6px;overflow:visible}
+  .s1{left:110px;animation-duration:3.2s}   .s1 .vine{height:64px}
+  .s2{left:410px;animation-duration:2.7s;animation-delay:-1.1s}   .s2 .vine{height:36px}
+  .s3{left:710px;animation-duration:3.5s;animation-delay:-2s}   .s3 .vine{height:84px}
+  @keyframes swing{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
+  /* bits of the monkey that move on their own */
+  .legL,.legR,.tail,.lid{transform-box:fill-box}
+  .legL{transform-origin:50% 0;animation:kickL 1.1s ease-in-out infinite}
+  .legR{transform-origin:50% 0;animation:kickR 1.1s ease-in-out infinite}
+  @keyframes kickL{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(14deg)}}
+  @keyframes kickR{0%,100%{transform:rotate(18deg)}50%{transform:rotate(-14deg)}}
+  .tail{transform-origin:0 50%;animation:wag 1.6s ease-in-out infinite}
+  @keyframes wag{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(16deg)}}
+  .lid{transform-origin:50% 0;animation:blink 4s steps(1) infinite}
+  @keyframes blink{0%,94%,100%{transform:scaleY(0)}95%,99%{transform:scaleY(1)}}
+
+  .wheel{position:absolute;left:220px;top:290px;width:520px;height:520px}
+  .wheel svg{width:100%;height:100%;display:block;filter:drop-shadow(0 16px 32px rgba(0,0,0,.45))}
+  .wheel .disc{transform-origin:50% 50%;transition:transform 4s cubic-bezier(.15,.7,.1,1)}
+  .wheel .ptr{position:absolute;left:234px;top:-24px;width:0;height:0;border-left:26px solid transparent;border-right:26px solid transparent;border-top:58px solid var(--cream);filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transform-origin:50% 0}
+  .wheel.spinning .ptr{animation:tick .18s ease-in-out infinite alternate}
+  @keyframes tick{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+  .wheel .hub{position:absolute;left:218px;top:218px;width:84px;height:84px;border-radius:50%;background:var(--brown);border:9px solid var(--cream);box-sizing:border-box}
+
+  /* jackpot segment: gold rim and pulsing glow */
+  .jp{stroke:#FFD166 !important;stroke-width:7 !important;animation:jpglow 1s ease-in-out infinite alternate}
+  .jptext{fill:#fff !important}
+  @keyframes jpglow{from{filter:drop-shadow(0 0 4px rgba(255,209,102,.6))}to{filter:drop-shadow(0 0 16px rgba(255,209,102,1))}}
+  /* the prize callout that pops up when the wheel lands */
+  .callout{position:absolute;left:0;top:560px;width:960px;text-align:center;opacity:0;transform:scale(.6);transition:opacity .35s,transform .45s cubic-bezier(.2,1.4,.4,1);pointer-events:none}
+  .callout.on{opacity:1;transform:scale(1)}
+  .callout .won{display:inline-block;padding:12px 32px;background:rgba(0,0,0,.72);border-radius:999px;font:56px/1 'Bebas Neue',Impact,sans-serif;color:#fff;letter-spacing:.15em;text-shadow:0 3px 10px rgba(0,0,0,.8)}
+  .callout .prize{display:inline-block;margin-top:14px;padding:18px 44px;background:var(--yellow);color:var(--ink);border-radius:18px;font:88px/1 'Bebas Neue',Impact,sans-serif;box-shadow:0 14px 30px rgba(0,0,0,.45)}
+
+  .confetti{position:absolute;top:-20px;width:12px;height:18px;animation:fall 2.8s linear forwards}
+  @keyframes fall{to{transform:translateY(1120px) rotate(720deg);opacity:.2}}
+
+  .headline{position:absolute;left:0;bottom:44px;width:960px;text-align:center;color:var(--cream);font:72px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:.03em;text-shadow:0 6px 18px rgba(0,0,0,.5)}
+  .headline b{display:block;color:var(--yellow);font-weight:400;font-size:100px;margin-top:2px;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+  /* ---------- RIGHT ---------- */
+  .right{position:relative;width:960px;height:1080px;background:#fff;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .logos{display:flex;gap:48px;align-items:center;justify-content:center;height:130px;margin-bottom:34px}
+  .logos img{display:block;max-height:130px;max-width:340px;object-fit:contain}
+  .logos .omb{filter:brightness(0)}
+  .logos .mark{font:60px/.9 'Bebas Neue',Impact,sans-serif;text-align:center}
+  .logos .x{width:2px;height:90px;background:#ddd}
+  #qr{width:420px;height:420px}
+  #qr svg{width:100%;height:100%;display:block}
+  .scan{font:92px/1 'Bebas Neue',Impact,sans-serif;margin:30px 0 8px;text-align:center}
+  .steps{font:700 34px/1.3 Inter,sans-serif;text-align:center;width:720px;margin:6px 0 0;color:var(--ink);min-height:90px;transition:opacity .4s}
+  .steps em{font-style:normal;color:var(--orange)}
+  .steps.fade{opacity:0}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="left">
+    <div class="canopy"></div>
+    <div class="burst"></div>
+    <div class="spark" style="left:150px;top:340px"></div>
+    <div class="spark" style="left:790px;top:390px;animation-delay:.5s"></div>
+    <div class="spark" style="left:120px;top:700px;animation-delay:1s"></div>
+    <div class="spark" style="left:830px;top:760px;animation-delay:.3s"></div>
+    <div class="spark" style="left:470px;top:250px;animation-delay:.8s;width:12px;height:12px"></div>
+
+    <div class="swing s1" id="s1"></div>
+    <div class="swing s2" id="s2"></div>
+    <div class="swing s3" id="s3"></div>
+
+    <div class="wheel" id="wheelbox">
+      <svg viewBox="0 0 400 400"><g class="disc" id="disc"></g></svg>
+      <div class="ptr"></div><div class="hub"></div>
+    </div>
+    <div class="callout" id="callout"><div class="won">You could win</div><br><div class="prize" id="cprize"></div></div>
+
+    <div class="headline">Spin the wheel<b>Win pints, points and food</b></div>
+  </div>
+
+  <div class="right">
+    <div class="logos">
+      <img src="https://threewisemonkeyscolchester.com/wp-content/uploads/2025/03/TWM-POS-1024x640.png" alt="Three Wise Monkeys" onerror="this.outerHTML='<div class=mark>Three Wise<br>Monkeys</div>'">
+      <div class="x"></div>
+      <img class="omb" src="https://othermonkeybrewing.com/wp-content/uploads/2025/09/OMB-White-Logo.svg" alt="Other Monkey Brewing" onerror="this.outerHTML='<div class=mark>Other Monkey<br>Brewing</div>'">
+    </div>
+    <div id="qr"></div>
+    <div class="scan">Scan to spin</div>
+    <p class="steps" id="steps">Join <em>Monkey Points</em> with your mobile and email, then spin the wheel on your phone.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.getElementById("stage").style.transform = "scale(" + s + ")";
+  }
+  window.addEventListener("resize", fit); fit();
+
+  // ---- monkeys (inline so the legs, tail and eyes can move) ----
+  var MONKEY = '<svg viewBox="0 0 100 140">'
+    + '<g class="armL"><path d="M44 6 C30 20 26 40 34 56" fill="none" stroke="#5A3217" stroke-width="9" stroke-linecap="round"/><circle cx="44" cy="6" r="6" fill="#E9BF93"/></g>'
+    + '<g class="armR"><path d="M56 6 C70 20 74 40 66 56" fill="none" stroke="#5A3217" stroke-width="9" stroke-linecap="round"/><circle cx="56" cy="6" r="6" fill="#E9BF93"/></g>'
+    + '<path class="tail" d="M60 96 C84 100 90 76 78 66" fill="none" stroke="#5A3217" stroke-width="6" stroke-linecap="round"/>'
+    + '<ellipse cx="50" cy="82" rx="21" ry="24" fill="#5A3217"/><ellipse cx="50" cy="86" rx="12" ry="15" fill="#E9BF93"/>'
+    + '<path class="legL" d="M40 102 C34 114 36 126 44 132" fill="none" stroke="#5A3217" stroke-width="9" stroke-linecap="round"/>'
+    + '<path class="legR" d="M60 102 C66 114 64 126 56 132" fill="none" stroke="#5A3217" stroke-width="9" stroke-linecap="round"/>'
+    + '<circle cx="27" cy="46" r="9" fill="#5A3217"/><circle cx="73" cy="46" r="9" fill="#5A3217"/>'
+    + '<circle cx="27" cy="46" r="4.5" fill="#E9BF93"/><circle cx="73" cy="46" r="4.5" fill="#E9BF93"/>'
+    + '<circle cx="50" cy="48" r="22" fill="#5A3217"/><path d="M30 52 a20 18 0 0 0 40 0 a20 14 0 0 0 -40 0z" fill="#E9BF93"/>'
+    + '<circle cx="42" cy="46" r="3.3" fill="#14201B"/><circle cx="58" cy="46" r="3.3" fill="#14201B"/>'
+    + '<circle cx="43.2" cy="44.8" r="1.1" fill="#fff"/><circle cx="59.2" cy="44.8" r="1.1" fill="#fff"/>'
+    + '<rect class="lid" x="38" y="42" width="24" height="8" rx="4" fill="#E9BF93"/>'
+    + '<circle cx="47" cy="52" r="1.4" fill="#A8673A"/><circle cx="53" cy="52" r="1.4" fill="#A8673A"/>'
+    + '<path class="mouth" d="M41 57 q9 8 18 0" fill="none" stroke="#14201B" stroke-width="2.5" stroke-linecap="round"/></svg>';
+  [["s1", 40, 3], ["s2", 14, 1], ["s3", 60, 4]].forEach(function (m, k) {
+    var el = document.getElementById(m[0]), vine = '<div class="vine"></div>', leaves = "";
+    for (var i = 0; i < m[2]; i++) leaves += '<div class="leaf' + (i % 2 ? " l" : "") + '" style="top:' + (6 + i * 16) + 'px;animation-delay:' + (-i * .6 - k) + 's"></div>';
+    el.innerHTML = vine + leaves + MONKEY;
+    // stagger the leg kicks and blinks so the three don't move in unison
+    el.querySelectorAll(".legL,.legR,.tail,.lid").forEach(function (p) { p.style.animationDelay = (-k * .7) + "s"; });
+  });
+
+  // ---- QR ----
+  var url = new URL("../spin/", location.href).href;
+  try {
+    var q = qrcode(0, "M"); q.addData(url); q.make();
+    document.getElementById("qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch (e) { document.getElementById("qr").textContent = url; }
+
+  // ---- wheel + 40 second story: spin, land on a prize, celebrate, spin again ----
+  var disc = document.getElementById("disc"), wheelbox = document.getElementById("wheelbox"), callout = document.getElementById("callout"), cprize = document.getElementById("cprize"), left = document.querySelector(".left");
+  var steps = document.getElementById("steps");
+  var LINES = ["Join <em>Monkey Points</em> with your mobile and email, then spin the wheel on your phone.",
+               "<em>Points, pints and food</em> go straight onto your account.",
+               "<em>One spin a week</em> at Three Wise Monkeys and the Other Monkey taproom."];
+  var prizes = [], turns = 0, showIdx = 0;
+
+  function confetti() {
+    var cols = ["#FFD166", "#F26B3A", "#E8486B", "#FFF4D6", "#3C9A63"];
+    for (var i = 0; i < 46; i++) {
+      var c = document.createElement("div"); c.className = "confetti";
+      c.style.left = (40 + Math.random() * 880) + "px"; c.style.background = cols[i % cols.length];
+      c.style.animationDelay = (Math.random() * .6) + "s"; c.style.animationDuration = (2.2 + Math.random() * 1.2) + "s";
+      left.appendChild(c); setTimeout(function (n) { n.remove(); }, 4200, c);
+    }
+  }
+  var swings = ["s1", "s2", "s3"].map(function (id) { return document.getElementById(id); });
+  var spots = [110, 410, 710];
+  function swapVines() {
+    // monkeys hop along to the next vine
+    spots.unshift(spots.pop());
+    swings.forEach(function (el, k) { el.style.left = spots[k] + "px"; el.classList.add("hop"); setTimeout(function () { el.classList.remove("hop"); }, 1200); });
+  }
+  function cheer(ms) { left.classList.add("cheer"); setTimeout(function () { left.classList.remove("cheer"); }, ms); }
+  function spinTo(i, jackpot) {
+    var n = prizes.length, seg = 360 / n;
+    turns += 360 * (jackpot ? 5 : 3) + (360 - (i * seg + seg / 2)) - (turns % 360);
+    wheelbox.classList.add("spinning"); callout.classList.remove("on"); callout.classList.remove("jackpot");
+    disc.style.transform = "rotate(" + turns + "deg)";
+    setTimeout(function () {
+      wheelbox.classList.remove("spinning");
+      cprize.textContent = prizes[i].label;
+      callout.querySelector(".won").textContent = jackpot ? "Jackpot!" : "You could win";
+      if (jackpot) callout.classList.add("jackpot");
+      callout.classList.add("on");
+      if (prizes[i].type !== "none") { confetti(); cheer(jackpot ? 7000 : 2500); }
+      if (jackpot) { setTimeout(confetti, 900); setTimeout(confetti, 1800); party(); }
+    }, 4000);
+  }
+  // the finale: every monkey drops in and dances along the bottom
+  function party() {
+    left.classList.add("party");
+    var xs = [20, 180, 340, 500, 660, 820];
+    xs.forEach(function (x, k) {
+      var d = document.createElement("div"); d.className = "dancer d" + k; d.innerHTML = MONKEY;
+      d.style.left = (k % 2 ? 1000 : -200) + "px"; d.style.animationDelay = (-k * .17) + "s";
+      d.style.animationDuration = (.4 + (k % 3) * .1) + "s";   // bounce at different speeds too
+      left.appendChild(d);
+      setTimeout(function () { d.style.left = x + "px"; }, 60 + k * 120);
+      setTimeout(function () { d.remove(); }, 7400);
+    });
+    setTimeout(function () { left.classList.remove("party"); }, 7400);
+  }
+  var best = 0;
+  function story() {
+    // every 8 seconds: a new spin on a winnable prize. The 5th spin (at 32s) is the jackpot, then the loop restarts.
+    var winnable = prizes.map(function (p, i) { return p.type === "none" ? -1 : i; }).filter(function (i) { return i >= 0; });
+    var round = showIdx % 5, pick;
+    if (round === 4) pick = best; else pick = winnable.length ? winnable[showIdx % winnable.length] : 0;
+    spinTo(pick, round === 4); showIdx++;
+    if (round !== 4) swapVines();
+    steps.classList.add("fade");
+    setTimeout(function () { steps.innerHTML = round === 4 ? "<em>Scan now.</em> Every spin wins points or a prize." : LINES[showIdx % LINES.length]; steps.classList.remove("fade"); }, 400);
+  }
+
+  fetch("../spin/prizes.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (cfg) {
+    prizes = cfg.prizes;
+    best = prizes.findIndex(function (p) { return p.jackpot; });
+    if (best < 0) best = prizes.reduce(function (b, p, i) { return p.type !== "none" && (b < 0 || p.weight < prizes[b].weight) ? i : b; }, -1);
+    if (best < 0) best = 0;
+    var n = prizes.length, r = 196, cx = 200, cy = 200, step = 2 * Math.PI / n, NS = "http://www.w3.org/2000/svg", jpEls = [];
+    prizes.forEach(function (p, i) {
+      var a0 = i * step - Math.PI / 2, a1 = a0 + step;
+      var path = document.createElementNS(NS, "path");
+      path.setAttribute("d", "M" + cx + " " + cy + "L" + (cx + r * Math.cos(a0)) + " " + (cy + r * Math.sin(a0)) + "A" + r + " " + r + " 0 0 1 " + (cx + r * Math.cos(a1)) + " " + (cy + r * Math.sin(a1)) + "Z");
+      path.setAttribute("fill", p.colour || "#FFD166"); path.setAttribute("stroke", "#FFF4D6"); path.setAttribute("stroke-width", "3");
+      if (p.jackpot) { path.setAttribute("class", "jp"); jpEls.push(path); }
+      disc.appendChild(path);
+      var mid = (a0 + a1) / 2, tx = cx + 122 * Math.cos(mid), ty = cy + 122 * Math.sin(mid);
+      var t = document.createElementNS(NS, "text");
+      t.setAttribute("x", tx); t.setAttribute("y", ty); t.setAttribute("transform", "rotate(" + (mid * 180 / Math.PI) + " " + tx + " " + ty + ")");
+      t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "middle");
+      t.setAttribute("font-family", "'Bebas Neue',Impact,sans-serif"); t.setAttribute("font-size", p.jackpot ? "22" : "18");
+      t.setAttribute("fill", /^#[DEF]/i.test(p.colour || "#F") ? "#14201B" : "#FFF4D6");
+      if (p.jackpot) t.setAttribute("class", "jptext");
+      t.textContent = p.label;
+      disc.appendChild(t);
+      if (p.jackpot) jpEls.push(t);
+    });
+    jpEls.forEach(function (e) { disc.appendChild(e); });   // jackpot drawn last so its rim sits on top
+    setTimeout(story, 600);
+    setInterval(story, 8000);
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>
