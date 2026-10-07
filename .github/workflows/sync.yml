@@ -61,6 +61,11 @@ jobs:
           except Exception:
               old = None
           same = old == new and os.environ["EVENT"] == "schedule"
+          # Never replace a list that has posters with one that has none (website down + no cache)
+          posters = lambda items: sum(1 for i in (items or []) if i["src"].startswith("media/web-"))
+          if old and posters(new) == 0 and posters(old) > 0:
+              same = True
+              print("Website unreachable and nothing cached: keeping the live list as it is")
           open(os.environ["GITHUB_OUTPUT"], "a").write(f"changed={'false' if same else 'true'}\n")
           print("No change" if same else "Changed, deploying")
           EOF
