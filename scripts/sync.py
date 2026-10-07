@@ -423,7 +423,16 @@ def main():
         source_ok = False
         print(f"website fetch failed: {ex}", file=sys.stderr)
         try:
-            old = json.load(open(os.path.join(site, "playlist.json")))
+            # playlist.json isn't in the repo, so the last good copy lives in the cached media folder
+            # (site/media/_last_playlist.json). Fall back to the live page if the cache was lost too.
+            last = os.path.join(media, "_last_playlist.json")
+            if os.path.exists(last):
+                old = json.load(open(last))
+            else:
+                old = json.load(urllib.request.urlopen(urllib.request.Request(
+                    os.environ.get("LIVE_PLAYLIST_URL", "https://twmlive-art.github.io/twm-screens/playlist.json"),
+                    headers={"User-Agent": UA}), timeout=30))
+            print(f"using last good website list ({sum(1 for o in old['items'] if o['src'].startswith('media/web-'))} posters)")
             for o in old["items"]:
                 if o["src"].startswith("media/web-"):
                     items.append({"source": "website (cached)", "title": o["name"], "type": o["type"],
@@ -507,10 +516,14 @@ def main():
     items.sort(key=lambda i: 0 if i["source"] in ("extras", "drive") else 1)
 
     for old in os.listdir(media):
-        if old not in wanted:
+        if old not in wanted and not old.startswith("_"):
             os.remove(os.path.join(media, old))
 
     write_outputs(site, items, problems, now, source_ok)
+    if source_ok:
+        # Keep a copy of this good list in the cached media folder for next time the website is down
+        import shutil
+        shutil.copy(os.path.join(site, "playlist.json"), os.path.join(media, "_last_playlist.json"))
     print(f"{len(items)} items playing, {len(problems)} problems")
     for n, m in problems:
         print(f"  ! {n}: {m}")
