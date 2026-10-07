@@ -91,6 +91,18 @@ ITEM_RE = re.compile(r'<div class="em-event em-item[^"]*"[^>]*>(.*?)</div>\s*</d
 IMG_RE = re.compile(r'data-src="([^"]+)"|<img[^>]+src=[\'"](https?://[^\'"]+)[\'"]', re.S)
 TITLE_RE = re.compile(r'<h3 class="em-item-title"><a href="([^"]+)">(.*?)</a></h3>', re.S)
 DATE_RE = re.compile(r'em-event-date[^>]*>.*?</span>\s*(.*?)\s*</div>', re.S)
+TIME_RE = re.compile(r'em-event-time[^>]*>.*?</span>\s*(.*?)\s*</div>', re.S)
+DESC_RE = re.compile(r'<div class="em-item-desc">(.*?)</div>', re.S)
+CLOCK_RE = re.compile(r"(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m", re.I)
+
+
+def parse_start_time(text):
+    """'7:30 pm - 11:45 pm' -> '7:30pm'; '7:00 pm' -> '7pm'. None if nothing sensible."""
+    m = CLOCK_RE.search(text or "")
+    if not m:
+        return None
+    h, mins, ap = m.group(1), m.group(2), m.group(3).lower()
+    return f"{h}{'' if not mins or mins == '00' else ':' + mins}{ap}m"
 
 
 def parse_calendar(page_html):
@@ -106,6 +118,11 @@ def parse_calendar(page_html):
         parts = [p.strip() for p in date_text.split(" - ")]
         start = parse_uk_date(parts[0]) if parts else None
         end = parse_uk_date(parts[-1]) if len(parts) > 1 else start
+        tm = TIME_RE.search(block)
+        time_text = html.unescape(re.sub(r"<[^>]+>", "", tm.group(1))) if tm else ""
+        start_time = parse_start_time(time_text)
+        ds = DESC_RE.search(block)
+        desc = html.unescape(re.sub(r"<[^>]+>", " ", ds.group(1))) if ds else ""
         img = None
         for a, b in IMG_RE.findall(block):
             cand = a or b
@@ -118,7 +135,7 @@ def parse_calendar(page_html):
         if not img:
             problems.append((title, "No poster on the website. Add a featured image to the event."))
             continue
-        events.append({"title": title, "url": url, "start": start, "end": end or start, "img": img})
+        events.append({"title": title, "url": url, "start": start, "end": end or start, "img": img, "time": start_time, "desc": desc})
     return events, problems
 
 
@@ -129,6 +146,37 @@ def read_skip_list(site):
         return []
     with open(p, encoding="utf-8") as f:
         return [ln.strip().lower() for ln in f if ln.strip() and not ln.startswith("#")]
+
+
+def read_floor_rules(site):
+    """site/floors.txt: 'words in the title = Floor name', one per line, first match wins.
+    A line starting with '* =' is the fallback for anything that doesn't match."""
+    p = os.path.join(site, "floors.txt")
+    rules, default = [], None
+    if not os.path.exists(p):
+        return rules, default
+    with open(p, encoding="utf-8") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or ln.startswith("#") or "=" not in ln:
+                continue
+            key, _, floor = ln.partition("=")
+            key, floor = key.strip().lower(), floor.strip()
+            if not floor:
+                continue
+            if key == "*":
+                default = floor
+            else:
+                rules.append((key, floor))
+    return rules, default
+
+
+def floor_for(title, rules, default):
+    t = (title or "").lower()
+    for key, floor in rules:
+        if key in t:
+            return floor
+    return default
 
 
 def is_photo_listing(img_url):
@@ -287,6 +335,10 @@ def write_outputs(site, items, problems, now, source_ok):
             entry["until"] = i["until"]
         if i.get("seconds"):
             entry["seconds"] = i["seconds"]
+        if i.get("time"):
+            entry["time"] = i["time"]        # start time from the website listing, e.g. 7:30pm
+        if i.get("floor"):
+            entry["floor"] = i["floor"]      # from site/floors.txt
         playlist["items"].append(entry)
     with open(os.path.join(site, "playlist.json"), "w") as fh:
         json.dump(playlist, fh, indent=1)
@@ -356,6 +408,7 @@ def main():
         events, probs = parse_calendar(page)
         problems += probs
         skip = read_skip_list(site)
+        floor_rules, floor_default = read_floor_rules(site)
         for e in choose_events(events, now, skip):
             ext = os.path.splitext(e["img"].split("?")[0])[1].lower() or ".jpg"
             if ext not in IMAGE_EXT:
@@ -363,7 +416,8 @@ def main():
                 continue
             h = hashlib.sha1(e["img"].encode()).hexdigest()[:12]
             items.append({"source": "website", "title": e["title"], "type": "image", "date": e["start"],
-                          "until": e["end"], "seconds": None, "local": f"web-{h}.jpg", "url": e["img"]})
+                          "until": e["end"], "seconds": None, "local": f"web-{h}.jpg", "url": e["img"],
+                          "time": e.get("time"), "floor": floor_for(e["title"] + " " + e.get("desc", ""), floor_rules, floor_default)})
         print(f"website: {len(events)} events listed, {len(items)} selected")
     except Exception as ex:  # keep last good list rather than blank the screens
         source_ok = False
@@ -374,6 +428,7 @@ def main():
                 if o["src"].startswith("media/web-"):
                     items.append({"source": "website (cached)", "title": o["name"], "type": o["type"],
                                   "date": o.get("date"), "until": o.get("until"), "seconds": o.get("seconds"),
+                                  "time": o.get("time"), "floor": o.get("floor"),
                                   "local": o["src"].split("/", 1)[1], "url": None})
         except Exception:
             pass

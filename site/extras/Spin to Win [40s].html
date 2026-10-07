@@ -106,11 +106,11 @@
 
   /* ---------- RIGHT ---------- */
   .right{position:relative;width:960px;height:1080px;background:#fff;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .logos{display:flex;gap:48px;align-items:center;justify-content:center;height:130px;margin-bottom:34px}
-  .logos img{display:block;max-height:130px;max-width:340px;object-fit:contain}
-  .logos .omb{filter:brightness(0)}
+  /* Both logos sit on a white badge with a thin edge, like the badge on the OMB promo */
+  .logos{display:flex;gap:40px;align-items:center;justify-content:center;height:150px;margin-bottom:30px}
+  .logos .badge{display:flex;align-items:center;justify-content:center;height:150px;padding:0 34px;background:#fff;border:3px solid #e6e6e6;border-radius:26px;box-shadow:0 10px 26px rgba(0,0,0,.10)}
+  .logos img{display:block;max-height:110px;max-width:320px;object-fit:contain}
   .logos .mark{font:60px/.9 'Bebas Neue',Impact,sans-serif;text-align:center}
-  .logos .x{width:2px;height:90px;background:#ddd}
   #qr{width:420px;height:420px}
   #qr svg{width:100%;height:100%;display:block}
   .scan{font:92px/1 'Bebas Neue',Impact,sans-serif;margin:30px 0 8px;text-align:center}
@@ -145,9 +145,9 @@
 
   <div class="right">
     <div class="logos">
-      <img src="https://threewisemonkeyscolchester.com/wp-content/uploads/2025/03/TWM-POS-1024x640.png" alt="Three Wise Monkeys" onerror="this.outerHTML='<div class=mark>Three Wise<br>Monkeys</div>'">
-      <div class="x"></div>
-      <img class="omb" src="https://othermonkeybrewing.com/wp-content/uploads/2025/09/OMB-White-Logo.svg" alt="Other Monkey Brewing" onerror="this.outerHTML='<div class=mark>Other Monkey<br>Brewing</div>'">
+      <div class="badge"><img src="../omb/twm-logo-black.png" alt="Three Wise Monkeys" onerror="this.outerHTML='<div class=mark>Three Wise<br>Monkeys</div>'"></div>
+      <!-- Black PNG from the OMB site: no CSS filter, no SVG styling, so every TV browser draws it the same -->
+      <div class="badge"><img class="omb" src="https://othermonkeybrewing.com/wp-content/uploads/2025/09/OMB-Black-Logo.png" alt="Other Monkey Brewing" onerror="this.outerHTML='<div class=mark>Other Monkey<br>Brewing</div>'"></div>
     </div>
     <div id="qr"></div>
     <div class="scan">Scan to spin</div>

@@ -12,6 +12,17 @@ A web page that loops event posters on the venue TVs. Posters come straight from
 
 **To fix a poster or date, fix it on the website.** The screens update within the hour.
 
+## Other files you can edit on github.com
+
+| File | What it does |
+|---|---|
+| `site/floors.txt` | Which floor an event is on (words in the title or description = floor name). Shown next to the start time. |
+| `site/skip.txt` | Events to keep off the screens. |
+| `site/omb/beers.json` | The beers on the OMB Core 4 slide (`site/extras/OMB Core 4 [36s].html`). |
+| `site/qr-calendar.svg` | The QR code on every poster. Points at the website calendar. |
+
+Videos: TV browsers decode in software, so keep them 1280x720, H.264 Main profile, 25fps, under 2Mbps. 1080p files stutter on the Hisense.
+
 ## Extras (optional): Google Drive folder
 
 For things that aren't events (how-to-book videos, bar menu, house rules). Put them in the **TWM Colchester Screens** Drive folder, named like this:

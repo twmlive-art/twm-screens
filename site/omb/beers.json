@@ -1,0 +1,53 @@
+{
+  "_help": "The OMB Core 4 slide on the screens reads this file. Edit it on github.com and the slide updates within the hour. abv is text so '5.2%' is fine. bg = card background, accent = style pill colour, beer = liquid colour, head = foam colour. Keep it to four beers for the lineup card to look right.",
+  "title": "The Core 4",
+  "subtitle": "Brewed in Colchester",
+  "closing": "Ask for the Core 4 at the bar",
+  "footer": "All four are vegan  ·  othermonkeybrewing.com",
+  "beers": [
+    {
+      "name": "Great Journey Begins",
+      "style": "Pale Ale",
+      "abv": "4.5%",
+      "blurb": "Our flagship pale. Dry hopped with Citra and Mosaic for a balanced citrus hit.",
+      "vegan": true,
+      "bg": "#1F4A38",
+      "accent": "#F2C14E",
+      "beer": "#F2B632",
+      "head": "#FFF4D6"
+    },
+    {
+      "name": "Sank In Submarine Light",
+      "style": "Hazy NEIPA",
+      "abv": "6.0%",
+      "blurb": "Tropical and hop forward. Amarillo in the whirlpool, 10g per litre dry hop.",
+      "vegan": true,
+      "bg": "#10263F",
+      "accent": "#3EC9C2",
+      "beer": "#E9C76A",
+      "head": "#FFF4D6"
+    },
+    {
+      "name": "Forsake Future Days",
+      "style": "Helles Lager",
+      "abv": "4.0%",
+      "blurb": "Beer-garden lager. Tettnang hops and German malt for a clean, crisp pint with a light biscuit finish.",
+      "vegan": true,
+      "bg": "#1D3F73",
+      "accent": "#F2C14E",
+      "beer": "#F5D66B",
+      "head": "#FFFFFF"
+    },
+    {
+      "name": "Dreaming Of Evil",
+      "style": "Sweet Stout",
+      "abv": "4.7%",
+      "blurb": "Rich roasted coffee, layered chocolate and caramel. Just enough sweetness.",
+      "vegan": true,
+      "bg": "#141414",
+      "accent": "#C9C9C9",
+      "beer": "#1A0E08",
+      "head": "#E8D7C3"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Which floor an event is on, shown on the screens next to the date.
+# One rule per line: words to look for in the event title or description = floor name. First match wins, not case sensitive.
+# A line starting with "* =" is used when nothing matches. Leave it blank to show no floor.
+# CHECK THESE: AJ to confirm which floor each kind of event is on.
+twm live presents = Top Floor
+wine & food = Restaurant Floor
+taster evening = Restaurant Floor
+quiz = Restaurant Floor
+comedy = Top Floor
+comedian = Top Floor
+drag = Top Floor
+* = 

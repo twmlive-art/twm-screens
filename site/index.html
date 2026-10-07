@@ -21,10 +21,30 @@
   .slide.panel .info{display:flex}
   .info .venue{font:500 2.2vh/1.3 Inter,system-ui,sans-serif;letter-spacing:.25em;text-transform:uppercase;opacity:.75;white-space:nowrap}
   .info .title{font:13.5vh/0.95 'Bebas Neue',Impact,'Arial Narrow',sans-serif;margin:2.4vh 0 2.8vh;overflow-wrap:anywhere}
+  /* Calendar tile, top-right corner: the date as a big clear number */
+  .datetile{position:absolute;right:0;top:5.5vh;min-width:13vw;padding:1.4vh 1.4vw 1.6vh;text-align:center;background:#ffd166;color:#1a1a1a;border-radius:1.8vh;box-shadow:0 1vh 3vh rgba(0,0,0,.5)}
+  .datetile .dow{font:700 2.4vh/1.1 Inter,system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
+  .datetile .num{font:12vh/1 'Bebas Neue',Impact,'Arial Narrow',sans-serif;margin:.6vh 0 .2vh}
+  .datetile.range .num{font-size:9.5vh;line-height:1.1}
+  .datetile .mon{font:800 3.2vh/1.1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase}
+  .slide.panel .info .title,.slide.panel .info .venue{padding-right:15vw}
+  .slide.panel .info .venue{white-space:normal;line-height:1.5}
+  .slide.panel .info .date{display:none}
   .info .title.long{font-size:9.5vh}
   .info .date{font:700 5.2vh/1.2 Inter,system-ui,sans-serif;color:#ffd166}
+  .info .when{font:700 4.2vh/1.2 Inter,system-ui,sans-serif;color:#ffd166;margin-top:.4vh}
   .info .tix{font:500 2.6vh/1.3 Inter,system-ui,sans-serif;margin-top:3.8vh;opacity:.85}
   .info .pill{display:inline-block;align-self:flex-start;margin-top:1.3vh;padding:1.1vh 1.5vw;border:.3vh solid rgba(255,255,255,.6);border-radius:999px;font:700 2.8vh/1.2 Inter,system-ui,sans-serif}
+  /* QR code to the events calendar. In the details panel it sits under the web address;
+     on a full-screen graphic it's a small tile in the bottom-right corner. */
+  .info .qr{display:flex;align-items:center;margin-top:4vh}
+  .info .qr img{width:17vh;height:17vh;padding:1.2vh;background:#fff;border-radius:1.4vh;box-sizing:border-box}
+  .info .qr span{margin-left:1.6vw;font:700 2.6vh/1.25 Inter,system-ui,sans-serif;opacity:.9}
+  .slide .qrtile{position:absolute;right:2.2vw;bottom:3.6vh;display:flex;flex-direction:column;align-items:center;padding:1.2vh 1.2vh .9vh;background:rgba(255,255,255,.96);border-radius:1.6vh;box-shadow:0 .8vh 2.4vh rgba(0,0,0,.45);opacity:0;transition:opacity .6s}
+  .slide.on .qrtile{opacity:1}
+  .slide .qrtile img{width:15vh;height:15vh;display:block}
+  .slide .qrtile span{margin-top:.7vh;font:700 1.9vh/1.1 Inter,system-ui,sans-serif;color:#111;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+  #stage video.warm{opacity:0;pointer-events:none;width:1px;height:1px;left:-10px;top:-10px}
   #idle{color:#fff;font:600 4vw/1.2 system-ui,sans-serif;text-align:center;letter-spacing:.05em}
   #debug{position:fixed;left:1vw;bottom:1vw;color:#0f0;font:14px monospace;background:rgba(0,0,0,.7);padding:6px 10px;display:none;white-space:pre}
 </style>
@@ -41,6 +61,11 @@
   var REFRESH_MINUTES = +q.get("refresh") || 5;     // re-check playlist
   var RELOAD_HOURS    = +q.get("reload") || 6;      // full page reload to clear memory leaks
   var VIDEO_MAX_SECS  = 300;                        // never let one video hang the loop
+  var VIDEO_START_SECS = +q.get("vstart") || 45;    // how long a video gets to show its first frame (venue Wi-Fi is slow)
+  var VIDEO_STALL_SECS = 20;                        // once playing, skip if it freezes this long
+  var QR_SRC   = "qr-calendar.svg";                 // points at threewisemonkeyscolchester.com/calendar/
+  var QR_LABEL = "Scan for what's on";
+  var SHOW_QR  = q.get("qr") !== "0";               // ?qr=0 hides it
   var DEBUG = q.get("debug") === "1";
 
   var stage = document.getElementById("stage");
@@ -184,23 +209,33 @@
     log("play " + item.name);
     var el;
     if (item.type === "video") {
-      el = document.createElement("video");
-      el.muted = true; el.defaultMuted = true;
-      el.setAttribute("muted", ""); el.setAttribute("playsinline", ""); el.setAttribute("autoplay", "");
-      el.preload = "auto";
-      el.src = item.src;
-      el.addEventListener("playing", function () { show(el); });
-      el.addEventListener("timeupdate", function () { lastProgress = Date.now(); });
-      el.addEventListener("ended", next);
-      el.addEventListener("error", function () { fail("video error, skipping " + item.name); });
-      stage.appendChild(el);
-      var p = el.play(); if (p && p.catch) p.catch(function (e) { log("autoplay blocked: " + e.message); });
+      // Reuse the copy we started buffering during the posters before this one, if it's the same file
+      el = takeWarm(item.src) || makeVideo(item.src);
+      var revealed = false, mine = ++playToken;   // handlers from an old video must not steer the loop
+      var reveal = function () { if (revealed || mine !== playToken) return; revealed = true; show(el); };
+      var bail = function (msg) { if (mine !== playToken) return; playToken++; fail(msg); };
+      // TV browsers don't all fire "playing" reliably, so any sign of a frame will do
+      el.addEventListener("playing", reveal);
+      el.addEventListener("loadeddata", reveal);
+      el.addEventListener("canplay", reveal);
+      el.addEventListener("timeupdate", function () { lastProgress = Date.now(); if (el.currentTime > 0) reveal(); });
+      el.addEventListener("ended", function () { if (mine === playToken) { playToken++; next(); } });
+      el.addEventListener("error", function () { bail("video error, skipping " + item.name); });
+      el.addEventListener("stalled", function () { log("buffering " + item.name); });
+      if (!el.parentNode) stage.appendChild(el);
+      var p = el.play();
+      if (p && p.catch) p.catch(function (e) {
+        // Autoplay refused: don't sit on a black screen waiting, move on and try again next lap
+        log("autoplay blocked: " + e.message);
+        if (!revealed) bail("video autoplay blocked, skipping " + item.name);
+      });
       lastProgress = Date.now();
-      // Watchdog: skip if the video stalls for 20s or runs far too long
+      // Watchdog: a slow start gets VIDEO_START_SECS; a freeze mid-play gets VIDEO_STALL_SECS
       var started = Date.now();
       watchdog = setInterval(function () {
-        if (Date.now() - lastProgress > 20000 || Date.now() - started > VIDEO_MAX_SECS * 1000) {
-          log("stalled, skipping " + item.name); next();
+        var limit = (revealed ? VIDEO_STALL_SECS : VIDEO_START_SECS) * 1000;
+        if (Date.now() - lastProgress > limit || Date.now() - started > VIDEO_MAX_SECS * 1000) {
+          log((revealed ? "stalled" : "never started") + ", skipping " + item.name); playToken++; next();
         }
       }, 5000);
     } else if (item.type === "html") {
@@ -222,8 +257,17 @@
         // A 16:9 graphic fills the screen. Anything else (square / portrait posters) gets the
         // poster on the left and the event details on the right, over a blurred copy of the poster.
         var screenAR = stage.clientWidth / stage.clientHeight, imgAR = fg.naturalWidth / fg.naturalHeight;
-        if (Math.abs(screenAR - imgAR) < 0.15) { bg.style.display = "none"; }
-        else if (info) { el.classList.add("panel"); }
+        if (Math.abs(screenAR - imgAR) < 0.15) { bg.style.display = "none"; if (SHOW_QR) el.appendChild(qrTile()); }
+        else if (info) {
+          el.classList.add("panel");
+          // Poster box is 52.6vw x 89vh, poster sits at its left edge. Work out where the poster
+          // really ends and start the text 3vw after it, so the pair fills the middle of the screen.
+          var W = stage.clientWidth, H = stage.clientHeight;
+          var boxW = .526 * W, boxH = .89 * H, posterW = Math.min(boxW, boxH * imgAR);
+          var left = .036 * W + posterW + .03 * W;
+          info.style.left = left + "px"; info.style.width = (W - left - .03 * W) + "px";
+        }
+        else if (SHOW_QR) { el.appendChild(qrTile()); }
         show(el); timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
       };
       fg.onerror = function () { fail("image error, skipping " + item.name); };
@@ -235,10 +279,37 @@
   }
 
   // "2026-10-09" -> "Fri 9 Oct"; with a different end date -> "Sat 10 to Sun 11 Oct"
+  // Done by hand: some TV browsers (the Hisense) have no working Intl and printed just "10".
+  var DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function parts(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+    if (!m) return null;
+    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], 12));
+    return { day: +m[3], dow: DAYS[d.getUTCDay()], mon: MONTHS[+m[2] - 1] };
+  }
   function niceDate(iso) {
-    var d = new Date(iso + "T12:00:00Z");
-    try { return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(d).replace(",", ""); }
-    catch (e) { return iso; }
+    var p = parts(iso);
+    return p ? p.dow + " " + p.day + " " + p.mon : iso;
+  }
+  // Big calendar tile in the top-right corner: weekday, day number, month
+  function dateTile(item) {
+    var a = parts(item.date), b = (item.until && item.until !== item.date) ? parts(item.until) : null;
+    if (!a) return null;
+    var t = document.createElement("div"); t.className = "datetile";
+    var dow = document.createElement("div"); dow.className = "dow";
+    var num = document.createElement("div"); num.className = "num";
+    var mon = document.createElement("div"); mon.className = "mon";
+    if (b) {
+      dow.textContent = a.dow + " to " + b.dow;
+      num.textContent = a.day + "\u2013" + b.day;
+      mon.textContent = (a.mon === b.mon) ? a.mon : a.mon + " / " + b.mon;
+      t.classList.add("range");
+    } else {
+      dow.textContent = a.dow; num.textContent = a.day; mon.textContent = a.mon;
+    }
+    t.appendChild(dow); t.appendChild(num); t.appendChild(mon);
+    return t;
   }
   function buildInfo(item) {
     if (!item.date || !item.name) return null;   // in-house promos have no event details
@@ -247,10 +318,78 @@
     var title = document.createElement("div"); title.className = "title" + (item.name.length > 28 ? " long" : ""); title.textContent = item.name;
     var date = document.createElement("div"); date.className = "date";
     date.textContent = (item.until && item.until !== item.date) ? niceDate(item.date) + " to " + niceDate(item.until) : niceDate(item.date);
+    var when = null;
+    if (item.time || item.floor) {
+      when = document.createElement("div"); when.className = "when";
+      var bits = [];
+      if (item.time) bits.push("From " + item.time);
+      if (item.floor) bits.push(item.floor);
+      when.textContent = bits.join("  \u00b7  ");
+    }
     var tix = document.createElement("div"); tix.className = "tix"; tix.textContent = "Tickets & info";
     var pill = document.createElement("div"); pill.className = "pill"; pill.textContent = "threewisemonkeyscolchester.com";
-    info.appendChild(venue); info.appendChild(title); info.appendChild(date); info.appendChild(tix); info.appendChild(pill);
+    var tile = dateTile(item);
+    if (tile) info.appendChild(tile);
+    info.appendChild(venue); info.appendChild(title); info.appendChild(date);
+    if (when) info.appendChild(when);
+    info.appendChild(tix); info.appendChild(pill);
+    if (SHOW_QR) {
+      var qr = document.createElement("div"); qr.className = "qr";
+      var img = document.createElement("img"); img.src = QR_SRC; img.alt = "";
+      var txt = document.createElement("span"); txt.textContent = "Scan for tickets\nand what's on";
+      txt.style.whiteSpace = "pre-line";
+      qr.appendChild(img); qr.appendChild(txt); info.appendChild(qr);
+    }
     return info;
+  }
+  // Small QR tile for the corner of a full-screen graphic
+  function qrTile() {
+    var t = document.createElement("div"); t.className = "qrtile";
+    var img = document.createElement("img"); img.src = QR_SRC; img.alt = "";
+    var txt = document.createElement("span"); txt.textContent = QR_LABEL;
+    t.appendChild(img); t.appendChild(txt);
+    return t;
+  }
+
+  // ---- Pre-buffer the next video while the posters before it are on screen ----
+  // Venue Wi-Fi is slow; this gives a video 20s+ of head start so it's ready when its turn comes.
+  var warm = null;   // { src, el }
+  var playToken = 0; // bumps every time a video starts or stops, so stale events are ignored
+  function makeVideo(src) {
+    var v = document.createElement("video");
+    v.muted = true; v.defaultMuted = true;
+    v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("autoplay", "");
+    v.preload = "auto";
+    v.src = src;
+    return v;
+  }
+  function warmNextVideo() {
+    var up = null;
+    for (var i = 0; i < queue.length && i < 3; i++) {
+      if (queue[i].type === "video" && stillListed(queue[i])) { up = queue[i]; break; }
+    }
+    if (!up) return;
+    if (warm && warm.src === up.src) return;
+    dropWarm();
+    try {
+      var v = makeVideo(up.src); v.className = "warm"; v.removeAttribute("autoplay");
+      v.addEventListener("error", function () { if (warm && warm.el === v) dropWarm(); });
+      stage.appendChild(v); v.load();
+      warm = { src: up.src, el: v };
+      log("buffering next: " + up.name);
+    } catch (e) { warm = null; }
+  }
+  function takeWarm(src) {
+    if (!warm || warm.src !== src) return null;
+    var v = warm.el; warm = null;
+    if (v.error) { try { v.remove(); } catch (e) {} return null; }
+    v.className = "";
+    return v;
+  }
+  function dropWarm() {
+    if (!warm) return;
+    var v = warm.el; warm = null;
+    try { v.pause(); v.removeAttribute("src"); v.load(); if (v.parentNode) v.parentNode.removeChild(v); } catch (e) {}
   }
 
   function show(el) {
@@ -260,6 +399,7 @@
     current = el;
     // setTimeout rather than requestAnimationFrame: rAF never fires in a hidden tab, so the slide would stay invisible
     setTimeout(function () { el.classList.add("on"); }, 30);
+    if (el.tagName !== "VIDEO") warmNextVideo();
   }
 
   // Try to stop the TV screen sleeping (not every Samsung browser supports this)
