@@ -17,6 +17,7 @@ SOURCE 4 (optional): a private Drive folder via service account, only if GDRIVE_
   File naming (sources 2, 3 and 4):
     2026-10-31 Halloween.mp4        -> until 6am the morning after 31 Oct
     Bar Menu [15s].png              -> no date = always; 15 second hold
+    Spin to Win [40s].html          -> animated slide (repo extras folder only)
     _draft.mp4                      -> ignored
 
 Output: site/media/*, site/playlist.json, site/status.html
@@ -37,6 +38,7 @@ SITE_URL = os.environ.get("VENUE_CALENDAR_URL", "https://threewisemonkeyscolches
 UA = "TWM-Screens/1.0 (+venue signage)"
 VIDEO_EXT = {".mp4", ".m4v", ".webm"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+HTML_EXT = {".html", ".htm"}   # animated in-house slides, site/extras/ only
 MAX_MB = 95
 WARN_MB = 40
 LOOKAHEAD_DAYS = int(os.environ.get("LOOKAHEAD_DAYS", "60"))   # don't advertise gigs 4 months out
@@ -165,7 +167,7 @@ def plan_extras_folder(site, now):
         return [], []
     files = [{"id": n, "name": n, "size": os.path.getsize(os.path.join(folder, n)), "modifiedTime": str(os.path.getmtime(os.path.join(folder, n)))}
              for n in sorted(os.listdir(folder)) if os.path.isfile(os.path.join(folder, n))]
-    items, problems = plan_drive(files, now)
+    items, problems = plan_drive(files, now, allow_html=True)
     for i in items:
         i["source"] = "extras"
         i["local"] = "../extras/" + i["name"]   # relative to site/media/
@@ -190,7 +192,7 @@ def parse_name(filename):
     return {"until": until, "seconds": seconds, "title": title, "ext": ext}
 
 
-def plan_drive(files, now):
+def plan_drive(files, now, allow_html=False):
     items, problems = [], []
     for f in files:
         name = f["name"]
@@ -205,6 +207,8 @@ def plan_drive(files, now):
             kind = "video"
         elif info["ext"] in IMAGE_EXT:
             kind = "image"
+        elif info["ext"] in HTML_EXT and allow_html:
+            kind = "html"           # only from the repo folder; a Drive .html can't be served from media/
         else:
             problems.append((name, "Not supported. Use MP4 for video, JPG/PNG for graphics."))
             continue
