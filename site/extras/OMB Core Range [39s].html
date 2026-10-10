@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OMB Core Range</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* Replaces OMB_CoreRange_Landscape_16x9_TV.mp4.
+     Beers come from ../omb/beers.json (same file as the Core 4 slide).
+     Photos: each beer uses its "photo" from beers.json if set (e.g. "../omb/photos/forsake.jpg"),
+     otherwise the official glass mockup from othermonkeybrewing.com, then the can mockup.
+     Timeline: title 4s, each beer 7s, end 7s = 39s. One card at a time (no crossfades).
+     The colour fields in beers.json are for the Core 4 slide; this one is black on studio grey to match OMB's branding. */
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#111;font-family:Inter,system-ui,sans-serif}
+  /* Studio grey matched to the OMB mockup photos (wall ~#b4b4b4, floor ~#a3a3a3 from 81% down),
+     so the photo melts into the background instead of sitting in a box. */
+  #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;margin:-540px 0 0 -960px;overflow:hidden;
+    background:linear-gradient(to bottom,#b7b7b7 0,#b3b3b3 79%,#bdbdbd 80.5%,#a3a3a3 82%,#a3a3a3 100%)}
+  .card{position:absolute;inset:0;opacity:0;transition:opacity .45s ease}
+  .card.on{opacity:1}
+  .bebas{font-family:'Bebas Neue',Impact,'Arial Narrow',sans-serif;font-weight:400}
+
+  /* title */
+  .title{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .title img{height:220px;width:auto;opacity:0;transform:translateY(20px);transition:opacity .7s .1s,transform .7s .1s}
+  .title .big{font-size:210px;line-height:.9;margin-top:40px;letter-spacing:.01em;opacity:0;transform:translateY(20px);transition:opacity .7s .35s,transform .7s .35s}
+  .title .small{margin-top:22px;font-weight:700;font-size:28px;letter-spacing:.3em;text-transform:uppercase;color:#3a3a3a;opacity:0;transition:opacity .7s .7s}
+  .card.on.title img,.card.on.title .big{opacity:1;transform:none}
+  .card.on.title .small{opacity:1}
+
+  /* beer: photo right (slow push-in), words left */
+  .photo{position:absolute;right:0;top:0;width:1080px;height:1080px;overflow:hidden}
+  .photo img{position:absolute;left:0;top:0;width:1080px;height:1080px;transform:scale(1.0);transform-origin:50% 60%;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 220px);mask-image:linear-gradient(to right,transparent 0,#000 220px)}
+  .card.on .photo img{transform:scale(1.07);transition:transform 7.5s linear}
+  .copy{position:absolute;left:110px;top:0;width:780px;height:1080px;display:flex;flex-direction:column;justify-content:center}
+  .copy .kicker{font-weight:700;font-size:24px;letter-spacing:.3em;text-transform:uppercase;color:#3a3a3a}
+  .copy .name{font-size:176px;line-height:.86;margin-top:22px;letter-spacing:.005em}
+  .copy .name.long{font-size:146px}
+  .copy .style{margin-top:30px;font-size:64px;line-height:1;letter-spacing:.03em}
+  .copy .style span{opacity:.45;margin:0 18px}
+  .copy .rule{width:130px;height:8px;margin-top:36px;background:#111}
+  .copy .blurb{margin-top:34px;max-width:700px;font-weight:500;font-size:32px;line-height:1.4;color:#1d1d1d}
+  .copy > *{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s cubic-bezier(.2,.9,.3,1)}
+  .card.on .copy > *{opacity:1;transform:none}
+  .card.on .copy .name{transition-delay:.15s}.card.on .copy .style{transition-delay:.3s}
+  .card.on .copy .rule{transition-delay:.45s}.card.on .copy .blurb{transition-delay:.9s}
+  .logo{position:absolute;left:110px;bottom:56px;height:84px;width:auto}
+  .nophoto .copy{width:1500px}
+
+  /* end: the four cans. The can mockup photos have two cans (front and back); this crops to the front one. */
+  .end{background:linear-gradient(to bottom,#aeaeae 0,#b9b9b9 35%,#c1c1c1 58%,#b4b4b4 100%)}
+  .cans{position:absolute;left:0;top:30px;width:100%;display:flex;justify-content:center}
+  .can{width:420px;text-align:center;opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s cubic-bezier(.2,.9,.3,1)}
+  .card.on .can{opacity:1;transform:none}
+  .can .pic{width:320px;height:620px;margin:0 auto;overflow:hidden;position:relative}
+  .can img{position:absolute;left:-75px;top:-90px;width:760px;height:760px;
+    -webkit-mask-image:linear-gradient(to right,transparent 80px,#000 108px,#000 362px,transparent 392px),linear-gradient(to bottom,transparent 90px,#000 110px,#000 680px,transparent 710px);
+    -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 80px,#000 108px,#000 362px,transparent 392px),linear-gradient(to bottom,transparent 90px,#000 110px,#000 680px,transparent 710px);mask-composite:intersect}
+  .can .n{font-size:46px;line-height:1;margin-top:0}
+  .can .s{margin-top:8px;font-weight:700;font-size:20px;letter-spacing:.18em;text-transform:uppercase;color:#333}
+  .end .foot{position:absolute;left:0;bottom:60px;width:100%;text-align:center}
+  .end .foot .big{font-size:104px;line-height:1}
+  .end .foot .web{display:inline-block;margin-top:18px;padding:12px 30px;background:#111;color:#fff;border-radius:999px;font-weight:700;font-size:28px}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+(function () {
+  var SITE = "https://othermonkeybrewing.com/wp-content/uploads/2025/09/";
+  var LOGO = SITE + "OMB-Black-Logo.png";
+  var TITLE_S = 4, BEER_S = 7, END_S = 7, FADE_MS = 450;
+  var stage = document.getElementById("stage");
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = "scale(" + s + ")";
+  }
+  window.addEventListener("resize", fit); fit();
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+  function el(cls, html) { var e = document.createElement("div"); e.className = cls; e.innerHTML = html; return e; }
+
+  // Photo candidates for a beer, best first
+  function photos(b) {
+    var s = slug(b.name), out = [];
+    if (b.photo) out.push(b.photo);
+    // the -1024x1024 sizes are ~180KB; the full-size originals are 2.5MB+, too heavy for the TV browsers
+    out.push(SITE + "omb-core-range-glass-mockup-" + s + "-1024x1024.jpg");
+    out.push(SITE + "omb-core-range-mockup-1-" + s + "-1024x1024.jpg");
+    out.push(SITE + "omb-core-range-glass-mockup-" + s + ".jpg");
+    return out;
+  }
+  function canPhotos(b) {
+    var s = slug(b.name), out = [];
+    if (b.canPhoto) out.push(b.canPhoto);
+    out.push(SITE + "omb-core-range-mockup-1-" + s + "-800x800.jpg");
+    out.push(SITE + "omb-core-range-mockup-1-" + s + ".jpg");
+    return out;
+  }
+  // Load the first candidate that works; on total failure call none()
+  function firstWorking(list, ok, none) {
+    var i = 0;
+    (function tryNext() {
+      if (i >= list.length) { if (none) none(); return; }
+      var img = new Image(), src = list[i++];
+      img.onload = function () { ok(src); };
+      img.onerror = tryNext;
+      img.src = src;
+    })();
+  }
+
+  function build(cfg) {
+    var beers = (cfg.beers || []).slice(0, 4), cards = [];
+
+    // 1. title
+    var t = el("card title",
+      '<img src="' + LOGO + '" alt="Other Monkey Brewing" onerror="this.style.display=\'none\'">'
+      + '<div class="big bebas">Our Core Range</div>'
+      + '<div class="small">' + esc(cfg.subtitle || "Brewed in Colchester") + '</div>');
+    cards.push({ el: t, secs: TITLE_S });
+
+    // 2. one card per beer: photo right with a slow push-in, words left
+    beers.forEach(function (b) {
+      var card = { secs: BEER_S };
+      var c = el("card beer nophoto",
+        '<div class="photo"></div>'
+        + '<div class="copy">'
+        + '<div class="kicker">OMB Core Range</div>'
+        + '<div class="name bebas' + (String(b.name).length > 18 ? " long" : "") + '">' + esc(b.name) + '</div>'
+        + '<div class="style bebas">' + esc(b.style) + '<span>/</span>' + esc(b.abv) + '</div>'
+        + '<div class="rule"></div>'
+        + (b.blurb ? '<div class="blurb">' + esc(b.blurb) + '</div>' : "")
+        + '</div>'
+        + '<img class="logo" src="' + LOGO + '" alt="" onerror="this.style.display=\'none\'">');
+      card.el = c;
+      firstWorking(photos(b), function (src) {
+        // card.el, not c: the card may already have been re-inserted as a fresh copy
+        card.el.querySelector(".photo").innerHTML = '<img src="' + esc(src) + '" alt="">';
+        card.el.classList.remove("nophoto");
+      });
+      cards.push(card);
+    });
+
+    // 3. end: the four cans in a row
+    var endCard = { secs: END_S };
+    var e = el("card end",
+      '<div class="cans">' + beers.map(function (b, k) {
+        return '<div class="can" style="transition-delay:' + (k * .12) + 's"><div class="pic" data-k="' + k + '"></div>'
+          + '<div class="n bebas">' + esc(b.name) + '</div>'
+          + '<div class="s">' + esc(b.style) + ' &middot; ' + esc(b.abv) + '</div></div>';
+      }).join("") + '</div>'
+      + '<div class="foot"><div class="big bebas">Available in cans &middot; Ask at the bar</div><div class="web">othermonkeybrewing.com</div></div>');
+    beers.forEach(function (b, k) {
+      firstWorking(canPhotos(b), function (src) {
+        endCard.el.querySelector('.pic[data-k="' + k + '"]').innerHTML = '<img src="' + esc(src) + '" alt="">';
+      });
+    });
+    endCard.el = e;
+    cards.push(endCard);
+
+    cards.forEach(function (c) { stage.appendChild(c.el); });
+
+    // One card at a time: fade the old one out fully before the next comes in (no ghosting)
+    var i = 0, prev = null;
+    function showCard() {
+      var c = cards[i % cards.length]; i++;
+      if (prev) prev.classList.remove("on");
+      setTimeout(function () {
+        // restart the push-in and text animation
+        var fresh = c.el.cloneNode(true); c.el.parentNode.replaceChild(fresh, c.el); c.el = fresh;
+        setTimeout(function () { fresh.classList.add("on"); }, 30);
+        prev = fresh;
+      }, prev ? FADE_MS : 0);
+      setTimeout(showCard, c.secs * 1000);
+    }
+    // Give the photos a moment to arrive before the first beer card
+    setTimeout(showCard, 300);
+  }
+
+  fetch("../omb/beers.json?t=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.json(); })
+    .then(build)
+    .catch(function () {
+      stage.innerHTML = '<div class="card title on"><img src="' + LOGO + '" alt="Other Monkey Brewing"><div class="big bebas">Our Core Range</div><div class="small">Brewed in Colchester</div></div>';
+    });
+})();
+</script>
+</body>
+</html>
