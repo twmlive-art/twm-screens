@@ -10,7 +10,7 @@
   /* Replaces OMB_CoreRange_Landscape_16x9_TV.mp4.
      Beers come from ../omb/beers.json (same file as the Core 4 slide).
      Photos: each beer uses its "photo" from beers.json if set (e.g. "../omb/photos/forsake.jpg"),
-     otherwise the official glass mockup from othermonkeybrewing.com, then the can mockup.
+     otherwise the official can mockup from othermonkeybrewing.com, cropped to the front can (no glass).
      Timeline: title 4s, each beer 7s, end 7s = 39s. One card at a time (no crossfades).
      The colour fields in beers.json are for the Core 4 slide; this one is black on studio grey to match OMB's branding. */
   html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#111;font-family:Inter,system-ui,sans-serif}
@@ -35,6 +35,12 @@
   .photo img{position:absolute;left:0;top:0;width:1080px;height:1080px;transform:scale(1.0);transform-origin:50% 60%;
     -webkit-mask-image:linear-gradient(to right,transparent 0,#000 220px);mask-image:linear-gradient(to right,transparent 0,#000 220px)}
   .card.on .photo img{transform:scale(1.07);transition:transform 7.5s linear}
+  /* OMB's mockup photos show two cans (front and back); crop to the front can, big, no glass.
+     A real photo set in beers.json ("photo") skips this and fills the box as normal. */
+  .photo img.canshot{left:155px;top:-101px;width:1243px;height:1243px;transform-origin:31% 52%;
+    -webkit-mask-image:linear-gradient(to right,transparent 150px,#000 196px,#000 585px,transparent 640px),linear-gradient(to bottom,transparent 120px,#000 175px,#000 1110px,transparent 1170px);
+    -webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 150px,#000 196px,#000 585px,transparent 640px),linear-gradient(to bottom,transparent 120px,#000 175px,#000 1110px,transparent 1170px);mask-composite:intersect}
+  .card.on .photo img.canshot{transform:scale(1.04)}
   .copy{position:absolute;left:110px;top:0;width:780px;height:1080px;display:flex;flex-direction:column;justify-content:center}
   .copy .kicker{font-weight:700;font-size:24px;letter-spacing:.3em;text-transform:uppercase;color:#3a3a3a}
   .copy .name{font-size:176px;line-height:.86;margin-top:22px;letter-spacing:.005em}
@@ -89,10 +95,9 @@
   function photos(b) {
     var s = slug(b.name), out = [];
     if (b.photo) out.push(b.photo);
-    // the -1024x1024 sizes are ~180KB; the full-size originals are 2.5MB+, too heavy for the TV browsers
-    out.push(SITE + "omb-core-range-glass-mockup-" + s + "-1024x1024.jpg");
+    // can-only shots (the glass in OMB's glass mockups is a small straight tumbler, not a British pint)
     out.push(SITE + "omb-core-range-mockup-1-" + s + "-1024x1024.jpg");
-    out.push(SITE + "omb-core-range-glass-mockup-" + s + ".jpg");
+    out.push(SITE + "omb-core-range-mockup-1-" + s + "-800x800.jpg");
     return out;
   }
   function canPhotos(b) {
@@ -140,7 +145,8 @@
       card.el = c;
       firstWorking(photos(b), function (src) {
         // card.el, not c: the card may already have been re-inserted as a fresh copy
-        card.el.querySelector(".photo").innerHTML = '<img src="' + esc(src) + '" alt="">';
+        var cls = src.indexOf("omb-core-range-mockup-1-") >= 0 ? ' class="canshot"' : "";
+        card.el.querySelector(".photo").innerHTML = '<img' + cls + ' src="' + esc(src) + '" alt="">';
         card.el.classList.remove("nophoto");
       });
       cards.push(card);
