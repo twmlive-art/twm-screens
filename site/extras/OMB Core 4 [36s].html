@@ -30,9 +30,9 @@
   .beer .num{position:absolute;right:70px;top:54px;font-weight:900;font-size:120px;line-height:1;letter-spacing:-.02em;opacity:.95}
   .beer .num small{font-size:48px;font-weight:700;opacity:.6;margin-left:6px}
   .beer .range{position:absolute;right:76px;top:184px;font-weight:700;font-size:22px;letter-spacing:.24em;text-transform:uppercase;opacity:.7}
-  .glass{position:absolute;left:150px;top:110px;width:470px;height:840px}
+  .glass{position:absolute;left:80px;top:20px;width:600px;height:1040px}
   .glass svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45))}
-  .text{position:absolute;left:720px;top:0;width:1000px;height:1080px;display:flex;flex-direction:column;justify-content:center}
+  .text{position:absolute;left:740px;top:0;width:1000px;height:1080px;display:flex;flex-direction:column;justify-content:center}
   .text .name{font-weight:900;font-size:124px;line-height:.98;letter-spacing:-.02em;transform:translateY(30px);opacity:0;transition:transform .6s cubic-bezier(.2,.9,.3,1),opacity .6s}
   .text .name.long{font-size:98px}
   .text .pill{display:inline-block;align-self:flex-start;margin-top:30px;padding:12px 26px;border-radius:999px;font-weight:900;font-size:36px;color:#141414;transform:translateY(30px);opacity:0;transition:transform .6s .15s cubic-bezier(.2,.9,.3,1),opacity .6s .15s}
@@ -73,39 +73,39 @@
   function badge(small) { return '<div class="badge' + (small ? " small" : "") + '"><img src="' + LOGO + '" alt="Other Monkey Brewing"></div>'; }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
 
-  // A proper British nonic pint: wide rim, the bulge a few inches down, tapering to a thick base.
-  // Fills right to the top and the head domes just over the rim, like a pint that's been poured properly.
-  var GLASS = "M66 110 L394 110 L397 168 Q420 205 401 246 L356 768 Q353 794 328 794 L132 794 Q107 794 104 768 L59 246 Q40 205 63 168 Z";
+  // A full-size British nonic pint (20 fl oz / 568ml): real proportions, roughly 1.75 times taller than the rim is wide,
+  // the bulge about a fifth of the way down, tapering to a thick base. Filled to the brim with the head domed over the top.
+  var GLASS = "M24 30 L496 30 L499 150 Q524 205 500 262 L436 836 Q432 868 400 868 L120 868 Q88 868 84 836 L20 262 Q-4 205 21 150 Z";
   var FILL = 'dur="3s" begin="0.3s" fill="freeze" calcMode="spline" keySplines=".25 .7 .3 1"';
   function glass(b, k) {
     var id = "g" + k;
-    return '<svg viewBox="0 0 460 820">'
+    return '<svg viewBox="0 0 520 900">'
       + '<defs><clipPath id="' + id + '"><path d="' + GLASS + '"/></clipPath>'
-      + '<linearGradient id="sh' + k + '" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".22" stop-color="#000" stop-opacity="0"/>'
-      + '<stop offset=".78" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient></defs>'
+      + '<linearGradient id="sh' + k + '" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".24"/><stop offset=".2" stop-color="#000" stop-opacity="0"/>'
+      + '<stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient></defs>'
       + '<path d="' + GLASS + '" fill="rgba(255,255,255,.07)"/>'
       + '<g clip-path="url(#' + id + ')">'
-      + '<rect x="0" y="820" width="460" height="820" fill="' + b.beer + '"><animate attributeName="y" from="820" to="168" ' + FILL + '/></rect>'
-      + '<rect x="0" y="820" width="460" height="24" fill="rgba(0,0,0,.10)"><animate attributeName="y" from="820" to="168" ' + FILL + '/></rect>'
-      + '<rect x="0" y="820" width="460" height="70" fill="' + b.head + '"><animate attributeName="y" from="820" to="104" ' + FILL + '/></rect>'
+      + '<rect x="0" y="900" width="520" height="900" fill="' + b.beer + '"><animate attributeName="y" from="900" to="98" ' + FILL + '/></rect>'
+      + '<rect x="0" y="900" width="520" height="26" fill="rgba(0,0,0,.10)"><animate attributeName="y" from="900" to="98" ' + FILL + '/></rect>'
+      + '<rect x="0" y="900" width="520" height="76" fill="' + b.head + '"><animate attributeName="y" from="900" to="26" ' + FILL + '/></rect>'
       + bubbles()
-      + '<rect x="0" y="0" width="460" height="820" fill="url(#sh' + k + ')"/>'
-      + '<rect x="100" y="760" width="260" height="34" fill="rgba(255,255,255,.18)"/>'
+      + '<rect x="0" y="0" width="520" height="900" fill="url(#sh' + k + ')"/>'
+      + '<rect x="84" y="818" width="352" height="50" fill="rgba(255,255,255,.16)"/>'
       + '</g>'
       // head domes over the rim once the pour settles
-      + '<path d="M70 112 Q230 66 390 112 Z" fill="' + b.head + '" opacity="0"><animate attributeName="opacity" from="0" to="1" dur=".5s" begin="3s" fill="freeze"/></path>'
-      + '<path d="' + GLASS + '" fill="none" stroke="#F3EBDD" stroke-width="6" stroke-linejoin="round"/>'
-      + '<path d="M104 262 L136 740" stroke="rgba(255,255,255,.42)" stroke-width="13" stroke-linecap="round"/>'
-      + '<path d="M80 176 Q66 205 80 236" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="9" stroke-linecap="round"/>'
-      + '<path d="M372 300 L344 700" stroke="rgba(255,255,255,.18)" stroke-width="7" stroke-linecap="round"/>'
+      + '<path d="M26 32 Q260 -16 494 32 Z" fill="' + b.head + '" opacity="0"><animate attributeName="opacity" from="0" to="1" dur=".5s" begin="3s" fill="freeze"/></path>'
+      + '<path d="' + GLASS + '" fill="none" stroke="#F3EBDD" stroke-width="7" stroke-linejoin="round"/>'
+      + '<path d="M66 290 L116 800" stroke="rgba(255,255,255,.42)" stroke-width="15" stroke-linecap="round"/>'
+      + '<path d="M38 160 Q20 205 38 250" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="10" stroke-linecap="round"/>'
+      + '<path d="M462 320 L414 790" stroke="rgba(255,255,255,.18)" stroke-width="8" stroke-linecap="round"/>'
       + '</svg>';
   }
   function bubbles() {
     var s = "";
-    for (var i = 0; i < 34; i++) {
-      var x = 132 + ((i * 53) % 196), r = 3 + (i % 4) * 1.5, d = 2.6 + (i % 5) * .55, b = ((i * .43) % 2.4);
-      s += '<circle cx="' + x + '" cy="780" r="' + r + '" fill="rgba(255,255,255,.7)">'
-        + '<animate attributeName="cy" from="780" to="190" dur="' + d + 's" begin="' + (2.2 + b) + 's" repeatCount="indefinite"/>'
+    for (var i = 0; i < 40; i++) {
+      var x = 120 + ((i * 53) % 280), r = 3 + (i % 4) * 1.5, d = 2.6 + (i % 5) * .55, b = ((i * .43) % 2.4);
+      s += '<circle cx="' + x + '" cy="850" r="' + r + '" fill="rgba(255,255,255,.7)">'
+        + '<animate attributeName="cy" from="850" to="110" dur="' + d + 's" begin="' + (2.2 + b) + 's" repeatCount="indefinite"/>'
         + '<animate attributeName="cx" values="' + x + ';' + (x + 6) + ';' + (x - 6) + ';' + x + '" dur="' + (d * .8) + 's" begin="' + (2.2 + b) + 's" repeatCount="indefinite"/>'
         + '<animate attributeName="opacity" values="0;.9;.9;0" dur="' + d + 's" begin="' + (2.2 + b) + 's" repeatCount="indefinite"/></circle>';
     }
