@@ -27,12 +27,12 @@
       "colour": "#1F4A38"
     },
     {
-      "id": "food5",
-      "label": "£5 off food",
+      "id": "plate",
+      "label": "Free small plate",
       "type": "voucher",
       "weight": 7,
       "colour": "#FFD166",
-      "code": "FOOD"
+      "code": "PLATE"
     },
     {
       "id": "pts25",
@@ -44,7 +44,7 @@
     },
     {
       "id": "cocktail",
-      "label": "2 for 1 cocktails",
+      "label": "50% off a cocktail",
       "type": "voucher",
       "weight": 6,
       "colour": "#FFD166",

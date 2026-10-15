@@ -211,7 +211,7 @@
       how.innerHTML = "<b>How it works</b><br>Your points land on the loyalty account linked to your mobile number. We've also emailed a confirmation to " + entry.email + "." + spam;
     } else if (p.type === "voucher") {
       $("expires").textContent = "Valid until " + niceDate(exp) + ". Voucher " + entry.voucher;
-      how.innerHTML = "<b>How to claim</b><br>Your voucher is on its way to " + entry.email + ". Show it at the bar at Three Wise Monkeys or the Other Monkey taproom, or just give them your mobile number." + spam;
+      how.innerHTML = "<b>How to claim</b><br>Your voucher is on its way to " + entry.email + ". Before you pay at Three Wise Monkeys or the Other Monkey taproom, give the bar the mobile number you signed up with so they can add you to the sale. Your prize only counts once it goes through on your account." + spam;
     } else {
       $("expires").textContent = "Spin again next week.";
       how.innerHTML = "<b>Still a win</b><br>You're now on Monkey Points, so every drink and meal earns you points from today.";

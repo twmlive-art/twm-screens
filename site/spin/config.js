@@ -6,7 +6,7 @@ window.SPIN_CONFIG = {
   terms: [
     "One spin per person per week. Spins are tied to your mobile number.",
     "Prizes are added to your loyalty account within a few minutes and expire 7 days after the spin. Drink and food prizes are also emailed to you as a voucher. Check your junk and spam folders if it hasn't arrived.",
-    "Points prizes are added automatically. Drink and food prizes are redeemed at the bar at either Three Wise Monkeys or the Other Monkey taproom: give the bar your mobile number and staff will see your prize on your account.",
+    "Points prizes are added automatically. Drink and food prizes are redeemed at the bar at either Three Wise Monkeys or the Other Monkey taproom: before you pay, give the bar the mobile number you signed up with so they can add you to the sale. Your prize only counts once it goes through on your account.",
     "Prizes have no cash value and can't be swapped. One prize per spin. Over 18s only for drink prizes.",
     "To play you agree to receive marketing emails from Three Wise Monkeys and Other Monkey Brewing. You can unsubscribe instantly from the link in any email and your loyalty account stays as it is.",
     "We store your name, mobile and email in Square for loyalty and marketing. Ask at the bar or email us to delete them."
