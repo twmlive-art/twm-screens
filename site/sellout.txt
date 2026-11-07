@@ -1,0 +1,4 @@
+# Promos that come off the screens once the till has sold enough.
+# words in the promo title = how many | Square item variation id | count sales from (YYYY-MM-DD)
+# Sliders - Special at TWM Colchester, 13 portions for the weekend (AJ, 7 Nov 2026)
+Sliders Special = 13 | DQEGOORIJOPWXMUYHC4WWUZ4 | 2026-11-06
