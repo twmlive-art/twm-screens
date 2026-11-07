@@ -18,6 +18,7 @@ SOURCE 4 (optional): a private Drive folder via service account, only if GDRIVE_
     2026-10-31 Halloween.mp4        -> until 6am the morning after 31 Oct
     Bar Menu [15s].png              -> no date = always; 15 second hold
     Spin to Win [40s].html          -> animated slide (repo extras folder only)
+    Sliders Special.png + a line in site/sellout.txt -> off once the till has sold N (needs SQUARE_TOKEN)
     _draft.mp4                      -> ignored
 
 Output: site/media/*, site/playlist.json, site/status.html
@@ -177,6 +178,89 @@ def floor_for(title, rules, default):
         if key in t:
             return floor
     return default
+
+
+# ---------------------------------------------------------------- sell-out promos (Square till)
+SQUARE_API = "https://connect.squareup.com/v2/orders/search"
+SQUARE_VERSION = "2025-10-16"
+
+
+def read_sellout_rules(site):
+    """site/sellout.txt: take a promo off the screens once the till has sold enough of it.
+    One line per promo:  words in the promo title = how many | Square item variation id | count from YYYY-MM-DD
+    e.g.  Sliders Special = 13 | DQEGOORIJOPWXMUYHC4WWUZ4 | 2026-11-06"""
+    p = os.path.join(site, "sellout.txt")
+    rules, problems = [], []
+    if not os.path.exists(p):
+        return rules, problems
+    with open(p, encoding="utf-8") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or ln.startswith("#") or "=" not in ln:
+                continue
+            key, _, rest = ln.partition("=")
+            parts = [x.strip() for x in rest.split("|")]
+            try:
+                target, var_id, since = int(parts[0]), parts[1], dt.date.fromisoformat(parts[2])
+            except Exception:
+                problems.append(("sellout.txt", f"Couldn't read the line '{ln}'. Use: Title words = 13 | VARIATION_ID | 2026-11-06"))
+                continue
+            rules.append({"key": key.strip().lower(), "target": target, "var": var_id, "since": since})
+    return rules, problems
+
+
+def square_sold(token, location, var_id, since):
+    """Units of one item variation sold at one location since 00:00 UK on `since` (open tabs count, returns taken off)."""
+    start = dt.datetime.combine(since, dt.time(0, 0), UK).isoformat()
+    body = {"location_ids": [location], "limit": 500, "return_entries": False,
+            "query": {"filter": {"date_time_filter": {"created_at": {"start_at": start}},
+                                 "state_filter": {"states": ["OPEN", "COMPLETED"]}}}}
+    sold = 0.0
+    for _ in range(60):   # 60 pages x 500 orders is plenty for a weekend
+        req = urllib.request.Request(SQUARE_API, data=json.dumps(body).encode(), method="POST", headers={
+            "Authorization": "Bearer " + token, "Square-Version": SQUARE_VERSION,
+            "Content-Type": "application/json", "User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            resp = json.load(r)
+        for o in resp.get("orders", []):
+            for li in o.get("line_items", []):
+                if li.get("catalog_object_id") == var_id:
+                    sold += float(li.get("quantity", 0) or 0)
+            for ret in o.get("returns", []):
+                for li in ret.get("return_line_items", []):
+                    if li.get("catalog_object_id") == var_id:
+                        sold -= float(li.get("quantity", 0) or 0)
+        if not resp.get("cursor"):
+            break
+        body["cursor"] = resp["cursor"]
+    return int(sold)
+
+
+def apply_sellouts(items, site):
+    """Drop in-house promos that have hit their sell-out number on the till. Returns (items, notes)."""
+    rules, notes = read_sellout_rules(site)
+    if not rules:
+        return items, notes
+    token = os.environ.get("SQUARE_TOKEN", "").strip()
+    location = os.environ.get("SQUARE_LOCATION_ID", "").strip()
+    if not token or not location:
+        notes.append(("Sell-out promos", "SQUARE_TOKEN secret or SQUARE_LOCATION_ID not set, so sell-out promos stay on."))
+        return items, notes
+    gone = set()
+    for r in rules:
+        try:
+            n = square_sold(token, location, r["var"], r["since"])
+        except Exception as ex:   # till unreachable: leave the promo up rather than guess
+            notes.append((r["key"], f"Couldn't check the till ({ex}), so it stays on."))
+            continue
+        if n >= r["target"]:
+            gone.add(r["key"])
+            notes.append((r["key"], f"Sold {n} of {r['target']} since {r['since']:%a %d %b}. Off the screens."))
+        else:
+            notes.append((r["key"], f"Sold {n} of {r['target']} since {r['since']:%a %d %b}. Still on."))
+    keep = [i for i in items if not (i["source"] in ("extras", "drive")
+                                     and any(k in i["title"].lower() for k in gone))]
+    return keep, notes
 
 
 def is_photo_listing(img_url):
@@ -471,6 +555,12 @@ def main():
             print(f"drive: {len(files)} files, {len(d_items)} selected")
         except Exception as ex:
             problems.append(("Google Drive", f"Couldn't read the extras folder: {ex}"))
+
+    # 5. Sell-out promos: off the screens once the till has sold enough (site/sellout.txt)
+    items, s_notes = apply_sellouts(items, site)
+    problems += s_notes
+    for n, m in s_notes:
+        print(f"sellout: {n}: {m}")
 
     # 4. Downloads (website + Drive only; repo extras are already on disk)
     wanted = set()
