@@ -2,7 +2,7 @@ name: Sync screens
 
 on:
   schedule:
-    - cron: "7 * * * *"      # every hour at :07
+    - cron: "7,22,37,52 * * * *"   # every 15 minutes (sell-out promos come off quickly)
     - cron: "0 9 1 * *"      # monthly keep-alive (see bottom job)
   workflow_dispatch:          # "Run workflow" button for an instant update
   push:
@@ -47,6 +47,8 @@ jobs:
           MAX_EVENTS: "200"
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
           GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+          SQUARE_TOKEN: ${{ secrets.SQUARE_TOKEN }}      # read-only use: counts till sales for site/sellout.txt
+          SQUARE_LOCATION_ID: L76BY8F04CXS3               # TWM Colchester
         run: python scripts/sync.py
 
       - name: Skip deploy if nothing changed
