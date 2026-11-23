@@ -66,6 +66,7 @@
   var QR_SRC   = "qr-calendar.svg";                 // points at threewisemonkeyscolchester.com/calendar/
   var QR_LABEL = "Scan for what's on";
   var SHOW_QR  = q.get("qr") !== "0";               // ?qr=0 hides it
+  var SCREEN = (q.get("screen") || "").toLowerCase();   // ?screen=topfloor: Top Floor gigs + Top Floor adverts only
   var DEBUG = q.get("debug") === "1";
 
   var stage = document.getElementById("stage");
@@ -114,7 +115,8 @@
     return fetch("playlist.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (data) {
-        var items = (data.items || []).filter(isLive);
+        var own = SCREEN && data.screens && data.screens[SCREEN];
+        var items = (own && own.length ? own : (data.items || [])).filter(isLive);
         var oldKey = playlist.map(function (i) { return i.src; }).join("|");
         var newKey = items.map(function (i) { return i.src; }).join("|");
         playlist = items;
@@ -257,7 +259,7 @@
         // A 16:9 graphic fills the screen. Anything else (square / portrait posters) gets the
         // poster on the left and the event details on the right, over a blurred copy of the poster.
         var screenAR = stage.clientWidth / stage.clientHeight, imgAR = fg.naturalWidth / fg.naturalHeight;
-        if (Math.abs(screenAR - imgAR) < 0.15) { bg.style.display = "none"; if (SHOW_QR) el.appendChild(qrTile()); }
+        if (Math.abs(screenAR - imgAR) < 0.15) { bg.style.display = "none"; if (SHOW_QR && item.qr !== false) el.appendChild(qrTile()); }
         else if (info) {
           el.classList.add("panel");
           // Poster box is 52.6vw x 89vh, poster sits at its left edge. Work out where the poster
@@ -267,7 +269,7 @@
           var left = .036 * W + posterW + .03 * W;
           info.style.left = left + "px"; info.style.width = (W - left - .03 * W) + "px";
         }
-        else if (SHOW_QR) { el.appendChild(qrTile()); }
+        else if (SHOW_QR && item.qr !== false) { el.appendChild(qrTile()); }
         show(el); timer = setTimeout(next, (item.seconds || IMAGE_SECONDS) * 1000);
       };
       fg.onerror = function () { fail("image error, skipping " + item.name); };
