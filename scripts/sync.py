@@ -18,6 +18,7 @@ SOURCE 4 (optional): a private Drive folder via service account, only if GDRIVE_
     2026-10-31 Halloween.mp4        -> until 6am the morning after 31 Oct
     Bar Menu [15s].png              -> no date = always; 15 second hold
     Spin to Win [40s].html          -> animated slide (repo extras folder only)
+    site/topfloor/Studio Hire @noqr [12s].jpg -> Top Floor TV only (?screen=topfloor); @noqr = no "what's on" QR tile
     Sliders Special.png + a line in site/sellout.txt -> off once the till has sold N (needs SQUARE_TOKEN)
     _draft.mp4                      -> ignored
 
@@ -306,6 +307,31 @@ def plan_extras_folder(site, now):
     return items, problems
 
 
+def plan_topfloor_folder(site, now):
+    """Adverts for the Top Floor TV only, committed to site/topfloor/ (AJ, 15 Nov 2026).
+    The Top Floor TV (address ending ?screen=topfloor) plays Top Floor gigs plus these, nothing else."""
+    folder = os.path.join(site, "topfloor")
+    if not os.path.isdir(folder):
+        return [], []
+    files = [{"id": n, "name": n, "size": os.path.getsize(os.path.join(folder, n)), "modifiedTime": str(os.path.getmtime(os.path.join(folder, n)))}
+             for n in sorted(os.listdir(folder)) if os.path.isfile(os.path.join(folder, n))]
+    items, problems = plan_drive(files, now, allow_html=True)
+    for i in items:
+        i["source"] = "topfloor"
+        i["local"] = "../topfloor/" + i["name"]
+    return items, problems
+
+
+def interleave(posters, adverts):
+    """Spread the adverts evenly through the posters, so they're not bunched together."""
+    if not posters:
+        return list(adverts)
+    out, step = list(posters), (len(posters) + 1) / (len(adverts) + 1)
+    for k in range(len(adverts) - 1, -1, -1):
+        out.insert(round(step * (k + 1)), adverts[k])
+    return out
+
+
 def parse_name(filename):
     stem, ext = os.path.splitext(filename)
     ext = ext.lower()
@@ -320,8 +346,10 @@ def parse_name(filename):
     if s:
         seconds = max(3, min(int(s.group(1)), 300))
         stem = SECS_RE.sub("", stem)
-    title = re.sub(r"[_]+", " ", stem).strip() or filename
-    return {"until": until, "seconds": seconds, "title": title, "ext": ext}
+    noqr = bool(re.search(r"@noqr\b", stem, re.I))      # slide has its own QR, so no "what's on" tile
+    stem = re.sub(r"@noqr\b", "", stem, flags=re.I)
+    title = re.sub(r"\s{2,}", " ", re.sub(r"[_]+", " ", stem)).strip() or filename
+    return {"until": until, "seconds": seconds, "title": title, "ext": ext, "noqr": noqr}
 
 
 def plan_drive(files, now, allow_html=False):
@@ -355,7 +383,7 @@ def plan_drive(files, now, allow_html=False):
         md5 = f.get("md5Checksum") or f.get("modifiedTime", "x")
         items.append({
             "source": "drive", "id": f["id"], "name": name, "title": info["title"], "type": kind,
-            "until": info["until"], "seconds": info["seconds"],
+            "until": info["until"], "seconds": info["seconds"], "noqr": info["noqr"],
             "local": f"drive-{f['id']}-{re.sub(r'[^0-9a-zA-Z]', '', md5)[:10]}{info['ext']}",
         })
     return items, problems
@@ -408,8 +436,28 @@ def fetch_drive(folder, sa_json):
 
 
 # ---------------------------------------------------------------- output
-def write_outputs(site, items, problems, now, source_ok):
+def make_entry(i):
+    if i["source"] in ("extras", "topfloor"):
+        src = i["source"] + "/" + urllib.parse.quote(i["name"])
+    else:
+        src = "media/" + i["local"]
+    entry = {"src": src, "name": i["title"], "type": i["type"]}
+    for k in ("date", "until", "seconds", "time", "floor"):
+        if i.get(k):
+            entry[k] = i[k]
+    if i.get("noqr"):
+        entry["qr"] = False
+    return entry
+
+
+def write_outputs(site, items, problems, now, source_ok, topfloor=()):
     playlist = {"generated": now.isoformat(timespec="seconds"), "items": []}
+    # Top Floor TV (?screen=topfloor): website events except Restaurant Floor ones (site/floors.txt) + site/topfloor/ adverts only.
+    # Kept under "screens" so the other TVs (and old players) never see the adverts.
+    tf_posters = [make_entry(i) for i in items if i["source"].startswith("website") and i.get("floor") in (None, "", "Top Floor")]   # untagged events are gigs too; Restaurant Floor stays off
+    tf_ads = [make_entry(i) for i in topfloor]
+    if tf_ads or tf_posters:
+        playlist["screens"] = {"topfloor": interleave(tf_posters, tf_ads)}
     for i in items:
         src = ("extras/" + urllib.parse.quote(i["name"])) if i["source"] == "extras" else ("media/" + i["local"])
         entry = {"src": src, "name": i["title"], "type": i["type"]}
@@ -439,6 +487,7 @@ table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;
 h2{{margin-top:28px}}</style></head><body>
 <h1>TWM Screens</h1><p>Last synced {now.strftime('%d %b %Y, %H:%M')} (UK). Updates every hour from the website calendar.</p>{warn}
 <h2>Playing now ({len(items)})</h2><table><tr><th>Item</th><th>From</th><th>Type</th><th>Until</th></tr>{rows}</table>
+<h2>Top Floor TV only ({len(playlist.get("screens", {}).get("topfloor", []))})</h2><p>Address ending <code>?screen=topfloor</code>. Top Floor gigs plus the site/topfloor/ adverts.</p><ul>{"".join(f"<li>{html.escape(e['name'])}</li>" for e in playlist.get("screens", {}).get("topfloor", [])) or "<li>Nothing</li>"}</ul>
 <h2>Problems to fix</h2><ul>{probs}</ul>
 <p>Events come from the <a href="{SITE_URL}">website calendar</a>. Fix a poster or date there and it updates here within the hour.</p>
 </body></html>"""
@@ -531,6 +580,9 @@ def main():
     items += x_items
     problems += x_probs
     print(f"extras: {len(x_items)} selected")
+    tf_items, tf_probs = plan_topfloor_folder(site, now)
+    problems += tf_probs
+    print(f"topfloor adverts: {len(tf_items)} selected")
 
     # 3. Public Drive folder (drag and drop, no keys)
     if os.environ.get("DRIVE_PUBLIC_FOLDER_ID"):
@@ -609,7 +661,7 @@ def main():
         if old not in wanted and not old.startswith("_"):
             os.remove(os.path.join(media, old))
 
-    write_outputs(site, items, problems, now, source_ok)
+    write_outputs(site, items, problems, now, source_ok, tf_items)
     if source_ok:
         # Keep a copy of this good list in the cached media folder for next time the website is down
         import shutil
