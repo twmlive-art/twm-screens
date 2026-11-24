@@ -55,7 +55,7 @@
     <h1>Spin the Wheel</h1>
     <div class="ed">Christmas edition</div>
     <div class="every">Every spin wins</div>
-    <div class="prize"><b>£10 off your bill</b> in January<br>plus bonus points or a free pint</div>
+    <div class="prize"><b>£10 off your bill</b> in January<br>plus a chance of bonus points</div>
     <div class="row">
       <div id="qr"></div>
       <div class="scan">Scan to spin<small>Join Monkey Points with your mobile and email. Your voucher lands in your inbox.</small></div>
@@ -78,7 +78,7 @@
   var g = document.getElementById("disc"), ns = "http://www.w3.org/2000/svg", n = 8, r = 192, cx = 200, cy = 200, st = 2 * Math.PI / n;
   function el(t, a) { var e = document.createElementNS(ns, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
   g.appendChild(el("circle", { cx: cx, cy: cy, r: 198, fill: "#3E7286", stroke: "#C9553F", "stroke-width": 2 }));
-  var SL = [["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+25 POINTS",0],["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+ FREE PINT",1]];
+  var SL = [["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+25 POINTS",0],["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+50 POINTS",1]];
   for (var i = 0; i < n; i++) {
     var a0 = i * st - Math.PI / 2, a1 = a0 + st, mid = (a0 + a1) / 2, tx = cx + 132 * Math.cos(mid), ty = cy + 132 * Math.sin(mid);
     g.appendChild(el("path", { d: "M200 200L" + (cx + r * Math.cos(a0)) + " " + (cy + r * Math.sin(a0)) + "A192 192 0 0 1 " + (cx + r * Math.cos(a1)) + " " + (cy + r * Math.sin(a1)) + "Z", fill: SL[i][1] ? "#F5E1BE" : (i % 2 ? "#477E93" : "#C9553F"), stroke: "#FFF6E3", "stroke-width": 2 }));
@@ -98,7 +98,7 @@
     // land mostly on plain £10 slices, sometimes a bonus, now and then the jackpot (roughly the real odds)
     var r = Math.random(), k = r < .02 ? 7 : r < .10 ? 3 : r < .25 ? [1, 5][Math.floor(Math.random() * 2)] : [0, 2, 4, 6][Math.floor(Math.random() * 4)];
     rot += 360 * 4 + (360 - (k * 45 + 22.5)) - (rot % 360);
-    co.firstChild.textContent = k === 7 ? "£10 OFF + FREE PINT" : k === 3 ? "£10 OFF + 25 POINTS" : (k === 1 || k === 5) ? "£10 OFF + 10 POINTS" : "£10 OFF YOUR BILL";
+    co.firstChild.textContent = k === 7 ? "£10 OFF + 50 POINTS" : k === 3 ? "£10 OFF + 25 POINTS" : (k === 1 || k === 5) ? "£10 OFF + 10 POINTS" : "£10 OFF YOUR BILL";
     g.style.transition = "transform 6s cubic-bezier(.12,.62,.08,1)";
     g.style.transform = "rotate(" + rot + "deg)";
     setTimeout(function () { co.classList.add("on"); }, 6100);
