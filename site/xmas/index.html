@@ -124,6 +124,7 @@
       <div class="bonus" id="bonus" style="display:none"></div>
       <div class="how" id="how"></div>
       <p class="shot">Screenshot this page too, just in case.</p>
+      <p class="shot"><a href="#" id="again" style="color:inherit">Not you, or sharing a phone? Spin with different details</a></p>
     </div>
   </section>
 
@@ -162,6 +163,15 @@
   if (C.spinsClose && Date.now() > Date.parse(C.spinsClose)) {
     message("The Christmas wheel has closed", "Thanks for playing. If you won, your £" + C.amount + " voucher is in your email and works until " + C.validTo + ". The weekly <a href=\"../spin/\">Spin to Win</a> is back.");
   }
+
+  // ---- "Not you?": forget the saved voucher on this phone and show the form again (the server still allows one spin per mobile and email)
+  document.getElementById("again").addEventListener("click", function (ev) {
+    ev.preventDefault();
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    try { $("form").reset(); } catch (e) {}
+    $("err").textContent = "";
+    showStep("signup");
+  });
 
   // ---- already played on this phone: show their code again
   try {
