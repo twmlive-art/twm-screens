@@ -82,6 +82,12 @@ jobs:
         with:
           path: site
 
+      # GitHub sometimes takes a few seconds to list a new artifact, so deploy-pages fails with
+      # "No artifacts named github-pages". A short wait first stops that (24 Nov 2026).
+      - name: Wait for the artifact to register
+        if: steps.check.outputs.changed == 'true'
+        run: sleep 20
+
       - id: deploy
         if: steps.check.outputs.changed == 'true'
         uses: actions/deploy-pages@v4
