@@ -1,4 +1,4 @@
-// Xmas Wheel settings. Edit on github.com, live within a few minutes.
+// Xmas Wheel settings. Edit on github.com, live within a few minutes. Script connected 24 Nov 2026.
 window.XMAS_CONFIG = {
   // The Xmas Wheel Google Apps Script web app URL (Deploy > Manage deployments > Web app URL).
   hookUrl: "https://script.google.com/macros/s/AKfycbzcPziLlWkagaokKuA4AY2Xa-4YtMUZDG-vk5G2f0G0lQhn4_dj_LaAoEnSqm5hZ5rG2Q/exec",
