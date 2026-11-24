@@ -26,7 +26,7 @@
   @keyframes tw{from{opacity:.3}to{opacity:1}}
   .callout{position:absolute;left:50%;top:400px;transform:translateX(-50%) scale(.2);opacity:0;z-index:3;text-align:center;transition:all .5s cubic-bezier(.3,1.5,.5,1)}
   .callout.on{opacity:1;transform:translateX(-50%) scale(1)}
-  .callout div{display:inline-block;padding:22px 46px;background:var(--red);border:8px solid var(--cream);border-radius:30px;color:var(--cream);font:120px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:.03em;box-shadow:0 20px 50px rgba(0,0,0,.6);white-space:nowrap}
+  .callout div{display:inline-block;padding:22px 46px;background:var(--red);border:8px solid var(--cream);border-radius:30px;color:var(--cream);font:96px/1 'Bebas Neue',Impact,sans-serif;letter-spacing:.03em;box-shadow:0 20px 50px rgba(0,0,0,.6);white-space:nowrap}
   .right{position:relative;z-index:1;width:920px;padding:70px 70px 0 10px;box-sizing:border-box;color:var(--cream)}
   .kicker{display:flex;gap:26px;align-items:center}.kicker img{height:84px;width:84px;border-radius:50%;background:#fff;padding:8px;object-fit:contain}
   h1{margin:10px 0 0;white-space:nowrap;font:128px/1.15 Yellowtail,cursive;font-weight:400;color:var(--gold)}
@@ -48,20 +48,20 @@
   <svg class="foliage tl" viewBox="0 0 220 220" aria-hidden="true"><g fill="#477E93"><path d="M10 20c40 0 70 20 80 60-40 0-70-20-80-60z"/><path d="M0 90c35-10 70 0 90 30-35 10-70 0-90-30z"/><path d="M60 0c20 30 20 65 0 95-20-30-20-65 0-95z" transform="translate(40 10) rotate(30 60 50)"/><path d="M10 150c30-20 65-20 90 5-30 20-65 20-90-5z" opacity=".8"/><path d="M120 10c25 15 35 45 25 75-25-15-35-45-25-75z" opacity=".7"/></g><g fill="#C9553F"><circle cx="96" cy="78" r="6"/><circle cx="108" cy="92" r="5"/><circle cx="40" cy="128" r="5"/><circle cx="150" cy="40" r="5"/><circle cx="100" cy="150" r="6"/></g><path fill="#F5E1BE" d="M170 120l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></svg><svg class="foliage br" viewBox="0 0 220 220" aria-hidden="true"><g fill="#477E93"><path d="M10 20c40 0 70 20 80 60-40 0-70-20-80-60z"/><path d="M0 90c35-10 70 0 90 30-35 10-70 0-90-30z"/><path d="M60 0c20 30 20 65 0 95-20-30-20-65 0-95z" transform="translate(40 10) rotate(30 60 50)"/><path d="M10 150c30-20 65-20 90 5-30 20-65 20-90-5z" opacity=".8"/><path d="M120 10c25 15 35 45 25 75-25-15-35-45-25-75z" opacity=".7"/></g><g fill="#C9553F"><circle cx="96" cy="78" r="6"/><circle cx="108" cy="92" r="5"/><circle cx="40" cy="128" r="5"/><circle cx="150" cy="40" r="5"/><circle cx="100" cy="150" r="6"/></g><path fill="#F5E1BE" d="M170 120l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></svg><svg class="foliage tr" viewBox="0 0 220 220" aria-hidden="true"><g fill="#477E93"><path d="M10 20c40 0 70 20 80 60-40 0-70-20-80-60z"/><path d="M0 90c35-10 70 0 90 30-35 10-70 0-90-30z"/><path d="M60 0c20 30 20 65 0 95-20-30-20-65 0-95z" transform="translate(40 10) rotate(30 60 50)"/><path d="M10 150c30-20 65-20 90 5-30 20-65 20-90-5z" opacity=".8"/><path d="M120 10c25 15 35 45 25 75-25-15-35-45-25-75z" opacity=".7"/></g><g fill="#C9553F"><circle cx="96" cy="78" r="6"/><circle cx="108" cy="92" r="5"/><circle cx="40" cy="128" r="5"/><circle cx="150" cy="40" r="5"/><circle cx="100" cy="150" r="6"/></g><path fill="#F5E1BE" d="M170 120l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></svg><svg class="foliage bl" viewBox="0 0 220 220" aria-hidden="true"><g fill="#477E93"><path d="M10 20c40 0 70 20 80 60-40 0-70-20-80-60z"/><path d="M0 90c35-10 70 0 90 30-35 10-70 0-90-30z"/><path d="M60 0c20 30 20 65 0 95-20-30-20-65 0-95z" transform="translate(40 10) rotate(30 60 50)"/><path d="M10 150c30-20 65-20 90 5-30 20-65 20-90-5z" opacity=".8"/><path d="M120 10c25 15 35 45 25 75-25-15-35-45-25-75z" opacity=".7"/></g><g fill="#C9553F"><circle cx="96" cy="78" r="6"/><circle cx="108" cy="92" r="5"/><circle cx="40" cy="128" r="5"/><circle cx="150" cy="40" r="5"/><circle cx="100" cy="150" r="6"/></g><path fill="#F5E1BE" d="M170 120l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></svg>
   <div class="left">
     <div class="wheelbox"><div class="pointer"></div><svg viewBox="0 0 400 400"><g id="disc"></g></svg><div class="hub"></div></div>
-    <div class="callout" id="callout"><div>£10 OFF FOOD</div></div>
+    <div class="callout" id="callout"><div>£10 OFF YOUR BILL</div></div>
   </div>
   <div class="right">
     <div class="kicker"><img src="../omb/twm-logo-black.png" alt="Three Wise Monkeys"><img src="https://othermonkeybrewing.com/wp-content/uploads/2025/09/OMB-Black-Logo.png" alt="Other Monkey Brewing" onerror="this.remove()"></div>
     <h1>Spin the Wheel</h1>
     <div class="ed">Christmas edition</div>
     <div class="every">Every spin wins</div>
-    <div class="prize"><b>£10 off your food bill</b><br>in January</div>
+    <div class="prize"><b>£10 off your bill</b> in January<br>plus bonus points or a free pint</div>
     <div class="row">
       <div id="qr"></div>
       <div class="scan">Scan to spin<small>Join Monkey Points with your mobile and email. Your voucher lands in your inbox.</small></div>
     </div>
   </div>
-<div class="foot">One spin per guest until 31 Dec. Use 1 to 31 Jan 2027 on a bill of £15 or more. Over 18s. Terms on the page.</div>
+<div class="foot">One spin per guest until 31 Dec. Use 1 to 31 Jan 2027, bill £15+. Bonus odds and terms on the page. Over 18s.</div>
 </div>
 <script>
 (function () {
@@ -78,12 +78,13 @@
   var g = document.getElementById("disc"), ns = "http://www.w3.org/2000/svg", n = 8, r = 192, cx = 200, cy = 200, st = 2 * Math.PI / n;
   function el(t, a) { var e = document.createElementNS(ns, t); for (var k in a) e.setAttribute(k, a[k]); return e; }
   g.appendChild(el("circle", { cx: cx, cy: cy, r: 198, fill: "#3E7286", stroke: "#C9553F", "stroke-width": 2 }));
+  var SL = [["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+25 POINTS",0],["YOUR BILL",0],["+10 POINTS",0],["YOUR BILL",0],["+ FREE PINT",1]];
   for (var i = 0; i < n; i++) {
     var a0 = i * st - Math.PI / 2, a1 = a0 + st, mid = (a0 + a1) / 2, tx = cx + 132 * Math.cos(mid), ty = cy + 132 * Math.sin(mid);
-    g.appendChild(el("path", { d: "M200 200L" + (cx + r * Math.cos(a0)) + " " + (cy + r * Math.sin(a0)) + "A192 192 0 0 1 " + (cx + r * Math.cos(a1)) + " " + (cy + r * Math.sin(a1)) + "Z", fill: i % 2 ? "#477E93" : "#C9553F", stroke: "#FFF6E3", "stroke-width": 2 }));
+    g.appendChild(el("path", { d: "M200 200L" + (cx + r * Math.cos(a0)) + " " + (cy + r * Math.sin(a0)) + "A192 192 0 0 1 " + (cx + r * Math.cos(a1)) + " " + (cy + r * Math.sin(a1)) + "Z", fill: SL[i][1] ? "#F5E1BE" : (i % 2 ? "#477E93" : "#C9553F"), stroke: "#FFF6E3", "stroke-width": 2 }));
     var t = el("text", { x: tx, y: ty, transform: "rotate(" + (mid * 180 / Math.PI + 90) + " " + tx + " " + ty + ")", "text-anchor": "middle", "font-family": "'Bebas Neue',Impact,sans-serif", fill: "#FFF6E3" });
-    var s1 = el("tspan", { x: tx, "font-size": 40, fill: "#FFF6E3" }); s1.textContent = "£10"; t.appendChild(s1);
-    var s2 = el("tspan", { x: tx, dy: 26, "font-size": 22 }); s2.textContent = "OFF FOOD"; t.appendChild(s2);
+    var s1 = el("tspan", { x: tx, "font-size": 32, fill: SL[i][1] ? "#C9553F" : "#FFF6E3" }); s1.textContent = "£10 OFF"; t.appendChild(s1);
+    var s2 = el("tspan", { x: tx, dy: 24, "font-size": 21, fill: SL[i][1] ? "#11242A" : "#FFF6E3" }); s2.textContent = SL[i][0]; t.appendChild(s2);
     g.appendChild(t);
   }
   var b = el("g", { "class": "bulbs" });
@@ -94,7 +95,10 @@
   var rot = 0, co = document.getElementById("callout");
   function go() {
     co.classList.remove("on");
-    rot += 360 * 4 + 22.5 + 45 * Math.floor(Math.random() * 8) - (rot % 45);
+    // land mostly on plain £10 slices, sometimes a bonus, now and then the jackpot (roughly the real odds)
+    var r = Math.random(), k = r < .02 ? 7 : r < .10 ? 3 : r < .25 ? [1, 5][Math.floor(Math.random() * 2)] : [0, 2, 4, 6][Math.floor(Math.random() * 4)];
+    rot += 360 * 4 + (360 - (k * 45 + 22.5)) - (rot % 360);
+    co.firstChild.textContent = k === 7 ? "£10 OFF + FREE PINT" : k === 3 ? "£10 OFF + 25 POINTS" : (k === 1 || k === 5) ? "£10 OFF + 10 POINTS" : "£10 OFF YOUR BILL";
     g.style.transition = "transform 6s cubic-bezier(.12,.62,.08,1)";
     g.style.transform = "rotate(" + rot + "deg)";
     setTimeout(function () { co.classList.add("on"); }, 6100);
