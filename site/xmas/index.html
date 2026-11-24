@@ -120,7 +120,7 @@
       <div class="won" id="wonline">Merry Christmas, you won</div>
       <div class="prize">£10 off</div>
       <div id="dates" style="font-weight:700"></div>
-      <div class="voucher" id="voucher"><small>Your voucher code</small><div class="code" id="code"></div><div id="cond"></div></div>
+      <div class="voucher" id="voucher"><small>Your code for the till</small><div class="code">XMAS10</div><small>Your reference: <span id="code"></span></small><div id="cond"></div></div>
       <div class="bonus" id="bonus" style="display:none"></div>
       <div class="how" id="how"></div>
       <p class="shot">Screenshot this page too, just in case.</p>
@@ -141,7 +141,7 @@
       <li>Use it from 1 to 31 January 2027 at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey Brewing taproom.</li>
       <li>Your bill needs to be £15 or more. £10 comes off the total.</li>
       <li>One use. No cash, no change or credit, can't be split across bills or used with another voucher or offer.</li>
-      <li>Give the bar the mobile number you spun with before you pay. Your voucher is on your Monkey Points account. <a href="terms.html" target="_blank" rel="noopener">Full terms</a>.</li>
+      <li>Before you pay, give the bar the mobile number you spun with and the code <b>XMAS10</b>. One use per person. <a href="terms.html" target="_blank" rel="noopener">Full terms</a>.</li>
     </ol>
   </details>
 </main>
@@ -288,7 +288,7 @@
     $("bonus").innerHTML = s.bonusLabel ? "<b>Bonus:</b> " + (s.bonus === "pts50" ? "JACKPOT, 50 Monkey Points added to your account now" : s.bonusLabel.replace(/^\+/, "") + " added to your account now") : "";
     $("bonus").style.display = s.bonusLabel ? "block" : "none";
     $("cond").textContent = "£" + C.amount + " off a bill of £" + C.minSpend + " or more. One use.";
-    $("how").innerHTML = "<b>How to use it</b><br>Give the bar the mobile number you spun with before you pay. Your voucher is saved on your Monkey Points account, and this code is your back-up. Use it at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey taproom." +
+    $("how").innerHTML = "<b>How to use it</b><br>Before you pay, give the bar the mobile number you spun with and the code XMAS10. One use per person. Your reference code is your back-up. Use it at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey taproom." +
       (s.email ? " We've emailed it to " + s.email.replace(/[<>&]/g, "") + "." : "") +
       "<p class=\"spam\">Not there in 10 minutes? Check your junk or spam folder.</p>";
     showStep("done");
