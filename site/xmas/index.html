@@ -81,7 +81,7 @@
   <section id="signup" class="step on">
     <h1>Spin the Wheel</h1>
     <p class="sub">Christmas edition</p>
-    <p class="lead">Every spin wins <b>£10 off your bill in January</b>. Join Monkey Points, spin, and your voucher lands straight in your inbox.</p>
+    <p class="lead">Every spin wins <b>£10 off your bill in January</b>, plus a chance to win bonus Monkey Points. Join Monkey Points, spin, and your voucher is saved to your account and sent to your inbox.</p>
     <span class="pill">One spin per guest</span>
     <form id="form" novalidate>
       <label for="name">Your name</label>
@@ -136,11 +136,11 @@
     <summary>The short version of the terms</summary>
     <ol>
       <li>Every spin wins £10 off your bill. One spin per guest, checked on mobile number and email.</li>
-      <li>Some spins also win a bonus: 10 Monkey Points (15 in 100 spins), 25 Monkey Points (8 in 100) or a free Other Monkey Brewing pint (2 in 100). Points go on your account straight away. The pint comes with your January voucher.</li>
+      <li>Some spins also win a bonus: 10 Monkey Points (15 in 100 spins), 25 Monkey Points (8 in 100) or the 50 Monkey Points jackpot (2 in 100). Points go on your account straight away.</li>
       <li>Use it from 1 to 31 January 2027 at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey Brewing taproom.</li>
       <li>Your bill needs to be £15 or more. £10 comes off the total.</li>
       <li>One use. No cash, no change or credit, can't be split across bills or used with another voucher or offer.</li>
-      <li>Show the email at the bar before you pay. <a href="terms.html" target="_blank" rel="noopener">Full terms</a>.</li>
+      <li>Give the bar the mobile number you spun with before you pay. Your voucher is on your Monkey Points account. <a href="terms.html" target="_blank" rel="noopener">Full terms</a>.</li>
     </ol>
   </details>
 </main>
@@ -188,7 +188,7 @@
     { b: "none",  top: "£10 OFF", sub: "YOUR BILL" },
     { b: "pts10", top: "£10 OFF", sub: "+10 POINTS" },
     { b: "none",  top: "£10 OFF", sub: "YOUR BILL" },
-    { b: "pint",  top: "£10 OFF", sub: "+ FREE PINT", jp: true }
+    { b: "pts50", top: "£10 OFF", sub: "+50 POINTS", jp: true }
   ];
   function buildWheel() {
     var g = $("wheel"), n = 8, r = 192, cx = 200, cy = 200, step = 2 * Math.PI / n, ns = "http://www.w3.org/2000/svg";
@@ -275,10 +275,10 @@
     $("wonline").textContent = again ? "You've already spun. Your prize" : "Merry Christmas" + (s.firstName ? " " + s.firstName : "") + ", you've won";
     $("dates").textContent = "Use it any day from " + s.validFrom + " to " + s.validTo + ".";
     $("code").textContent = s.code;
-    $("bonus").innerHTML = s.bonusLabel ? "<b>Bonus:</b> " + (s.bonus === "pint" ? "JACKPOT, a free Other Monkey Brewing pint with your voucher" : s.bonusLabel.replace(/^\+/, "") + " added to your account now") : "";
+    $("bonus").innerHTML = s.bonusLabel ? "<b>Bonus:</b> " + (s.bonus === "pts50" ? "JACKPOT, 50 Monkey Points added to your account now" : s.bonusLabel.replace(/^\+/, "") + " added to your account now") : "";
     $("bonus").style.display = s.bonusLabel ? "block" : "none";
     $("cond").textContent = "£" + C.amount + " off a bill of £" + C.minSpend + " or more. One use.";
-    $("how").innerHTML = "<b>How to use it</b><br>Show the email (or this code) at the bar before you pay, at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey taproom." +
+    $("how").innerHTML = "<b>How to use it</b><br>Give the bar the mobile number you spun with before you pay. Your voucher is saved on your Monkey Points account, and this code is your back-up. Use it at Three Wise Monkeys Colchester, Three Wise Monkeys Ipswich or the Other Monkey taproom." +
       (s.email ? " We've emailed it to " + s.email.replace(/[<>&]/g, "") + "." : "") +
       "<p class=\"spam\">Not there in 10 minutes? Check your junk or spam folder.</p>";
     showStep("done");
